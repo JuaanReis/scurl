@@ -82,7 +82,8 @@ pelo motor heurístico.
                         "entropy": 2.6
                   }
             }
-      ]
+      ],
+      "insight": []
 
 ```
 
