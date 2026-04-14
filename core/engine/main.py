@@ -1,3 +1,4 @@
+from __init__ import __version__
 from time import time 
 from datetime import datetime, timezone
 from core.engine.context_aply import apply_dependencies
@@ -8,15 +9,20 @@ from core.scanner.heuristics.url_analyzer.rules.domain_rules import IPInURLRule,
 from core.scanner.heuristics.url_analyzer.rules.parts_rules import Base64SegmentRule, FragmentRiskRule, PathDepthRiskRule, QueryContainsURLRule, QueryNoValueRule, RandomPathRiskRule
 from core.scanner.heuristics.url_analyzer.url_structure import extract_structure
 from core.scanner.score.sigmoid import sigmoid
+from .insights import insights
 
 def _classify(score: float) -> tuple[str, str]:
+    if score < 0:
+        return "invalid", "unknown"
     if score < 20:
         return "safe", "low"
     if score < 45:
         return "suspicious", "medium"
     if score < 70:
         return "dangerous", "high"
-    return "malicious", "critical"
+    if score <= 100:
+        return "malicious", "critical"
+    return "invalid", "unknown"
 
 def run_engine(url: str) -> dict:
     if not url:
@@ -46,6 +52,8 @@ def run_engine(url: str) -> dict:
                 "message": "URL inválida"
             }
         }
+
+    url = url.replace(" ", "")
 
     start = time()
 
@@ -99,8 +107,7 @@ def run_engine(url: str) -> dict:
         return {
             "status": "ok",
             "engine": {
-                "name": "scurl",
-                "version": "0.1"
+                "version": __version__
             },
             "meta": {
                 "url": url,
@@ -116,7 +123,8 @@ def run_engine(url: str) -> dict:
                 "rules_total": len(raw_results),
                 "rules_triggered": len(heuristics)
             },
-            "heuristics": heuristics
+            "heuristics": heuristics,
+            "insight": insights(heuristics, score)
         }
     
     except Exception as e:
@@ -124,7 +132,7 @@ def run_engine(url: str) -> dict:
             "status": "error",
             "meta": {
                 "url": url, 
-                "scan_time_s": round(time() - start, 3), 
+                "scan_time_s": round(time() - start, 3),
                 "version": "0.1"
             },
             "error": {

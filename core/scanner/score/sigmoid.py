@@ -1,7 +1,7 @@
 from math import exp
 from .weighted_average import weighted_average
 
-def sigmoid(scores: list, weights: list, k: int = 6) -> float:
+def sigmoid(scores: list, weights: list, k: int = 5) -> float:
     """
         Aplica a função sigmoide para transformar uma pontuação em uma escala de 0 a 100, onde a pontuação de 0.5 é o ponto de inflexão. O parâmetro k controla a inclinação da curva, com valores maiores resultando em uma transição mais abrupta entre as pontuações baixas e altas. A função retorna um valor entre 0 e 100, onde pontuações próximas a 0.5 resultam em valores próximos a 50, enquanto pontuações próximas a 0 ou 1 resultam em valores próximos a 0 ou 100, respectivamente.  
         

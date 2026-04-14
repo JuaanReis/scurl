@@ -21,9 +21,12 @@ def apply_dependencies(name: str, value: float | None, weight: float, results_ma
             skip = True
             reasons.append(dep["reason"])
             break
+
         elif action == "reduce":
-            weight *= dep["factor"]
-            reasons.append(dep["reason"])
+            if value is not None and value > 0:
+                weight *= dep["factor"]
+                reasons.append(dep["reason"])
+
         elif action == "increase":
             if value is not None and value > 0:
                 weight *= dep["factor"]
@@ -31,4 +34,5 @@ def apply_dependencies(name: str, value: float | None, weight: float, results_ma
 
     if skip:
         return None, weight, reasons
+    
     return value, weight, reasons
