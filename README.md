@@ -53,7 +53,7 @@ pelo motor heurístico.
             "timestamp": "2026-04-13T01:07:16.850351+00:00",
       },
       "result": {
-            "score": 75.32,
+            "score": 45.32,
             "risk_level": "high",
             "verdict": "suspicious"
       },
@@ -84,7 +84,6 @@ pelo motor heurístico.
             }
       ],
       "insight": []
-
 ```
 
 ------------------------------------------------------------------------
@@ -102,7 +101,7 @@ de risco**.
 
 ------------------------------------------------------------------------
 
-## 1. URL Structure Analysis
+## 1. Análise da estrutura de URL
 
 A primeira etapa analisa a estrutura da URL em busca de padrões
 frequentemente associados a ataques.
@@ -122,7 +121,7 @@ projetadas para enganar usuários.
 
 ------------------------------------------------------------------------
 
-## 2. HTTP Response Analysis
+## 2. Análise de resposta HTTP
 
 Após a análise estrutural, o scanner realiza uma requisição ao alvo e
 analisa a resposta HTTP.
@@ -136,7 +135,7 @@ Alguns sinais analisados:
 
 ------------------------------------------------------------------------
 
-## 3. Domain Intelligence
+## 3. Inteligência de Domínio
 
 O scanner também coleta metadados do domínio analisado.
 
@@ -148,7 +147,7 @@ Entre eles:
 
 ------------------------------------------------------------------------
 
-# Heuristic Scoring Engine
+# Motor de Pontuação Heurística
 
 Cada heurística gera um **score normalizado**.
 

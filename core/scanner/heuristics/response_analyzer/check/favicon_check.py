@@ -36,7 +36,7 @@ def favicon_check(tree: HTMLParser | None, structure: dict) -> ResultBase:
  
     href = favicon.attributes.get("href", "")
     parsed = urlparse(href)
-    is_external = same_owner(normalize_domain(parsed.netloc), normalize_domain(original_domain))
+    is_external = not same_owner(normalize_domain(parsed.netloc), normalize_domain(original_domain))
  
     return ResultBase(
         value=1.0 if is_external else 0.0,

@@ -23,7 +23,7 @@ DEPENDENCIES: dict[str, list[dict]] = {
         },
         {
             "depends_on": "dns_verify",
-            "condition": lambda v: v is not None and v < 0.2,
+            "condition": lambda v: v is not None and v < 0.3,
             "action": "reduce",
             "factor": 0.4,
             "reason": "SSL moderado + DNS saudável — infraestrutura estabelecida",

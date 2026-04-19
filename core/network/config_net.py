@@ -27,7 +27,7 @@
 
 from httpx import Client, Timeout, Limits, HTTPStatusError, ConnectError, RequestError
 
-clients_number = 2      # Número de clientes simutaneos.
+clients_number = 1      # Número de clientes simutaneos.
 client_kwargs = {
     "http2": False,
     "verify": False,

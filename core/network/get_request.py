@@ -48,14 +48,23 @@ def get_response(url: str, retries: int = 3, delay: float = 0.6) -> HTTPResult |
             )
 
         except HTTPStatusError as e:
-            status = e.response.status_code
-            
+            response = e.response
+            status = response.status_code
+        
             if status == 429:
-                retry_after = int(e.response.headers.get("Retry-After", 1))
+                retry_after = int(response.headers.get("Retry-After", 1))
                 sleep(retry_after)
                 continue
-
-            return None
+            
+            return HTTPResult(
+                url=str(response.url),
+                status=status,
+                headers=response.headers,
+                body=response.text,
+                elapsed=response.elapsed.total_seconds(),
+                size=len(response.content),
+                redirects=len(response.history),
+            )
 
         except (ConnectError, RequestError):
             sleep(delay * (2 ** attempt))

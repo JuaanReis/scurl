@@ -119,7 +119,7 @@ def num_ratio_risk(structure: dict, threshold: float = 0.25) -> ResultBase:
             print(result.details)  # Output: {'ratio': 0.3333, 'analyzed': 'pay123pal456'}
     """
 
-    domain = structure.get("registered_domain", "").split(".")[0]
+    domain = structure.get("hostname", "").split(".")[0]
     subdomains = structure.get("subdomain", [])
 
     all_parts = [domain] + subdomains

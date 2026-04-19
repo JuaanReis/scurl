@@ -25,7 +25,7 @@ def dns_mx(has_mx: bool) -> ResultBase:
         details={"has_mx": has_mx}
     )
 
-def get_stable_ttl(hostname: str, samples: int = 5) -> int:
+def get_stable_ttl(hostname: str, samples: int = 1) -> int:
     ttls = []
     for _ in range(samples):
         try:

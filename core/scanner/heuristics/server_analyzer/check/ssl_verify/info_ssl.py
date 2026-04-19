@@ -75,9 +75,11 @@ def get_ssl_cert(structure: dict) -> dict:
         return {}
     
     ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_OPTIONAL
 
     try:
-        with socket.create_connection((host, 443), timeout=8) as sock:
+        with socket.create_connection((host, 443), timeout=3) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                 cert = ssock.getpeercert()
 
@@ -95,18 +97,25 @@ def get_ssl_cert(structure: dict) -> dict:
         return {
             "invalid_cert": True
         }
+    
+    except socket.gaierror:
+        return {
+            "dns_error": True
+        }
 
     except Exception:
         return {
             "unknown": True
         }
 
+    subject = parse_issuer(cert.get('subject', []))
+
     return {
         "issuer": parse_issuer(cert.get('issuer', [])),
-        "subject": parse_issuer(cert.get('subject', [])),
+        "subject": subject,
         "notBefore": cert.get('notBefore', ""),
         "notAfter": cert.get('notAfter', ""),
         "san": [entry[1] for entry in cert.get('subjectAltName', []) if entry[0] == 'DNS'],
         "self_signed": cert.get('issuer', []) == cert.get('subject', []),
-        "organization": parse_issuer(cert.get('subject', [])).get('O', ""),
+        "organization": subject.get('O', "")
     }

@@ -74,7 +74,7 @@ def random_domain_risk(structure: dict, threshold: float = 3.5) -> ResultBase:
             print(result.details)  # Output: {'domain': 'randomdomain123', 'entropy': 4.2, 'is_above_threshold': True}
     """
 
-    domain = structure.get("registered_domain", "")
+    domain = structure.get("domain", "")
     
     if not domain:
         return ResultBase(

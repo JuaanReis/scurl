@@ -12,8 +12,8 @@ from ..check.response import parse_html_response
 
 class ParseHtmlResponseRule():
     def run(self, context):
-        tree, structure = parse_html_response(context)
-        return BodyRule(response=tree, structure=structure) 
+        tree, structure, response = parse_html_response(context)
+        return BodyRule(html=tree, structure=structure, response=response) 
     
 class ExternalScriptRule(ScanRule):
     def __init__(self):

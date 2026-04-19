@@ -1,4 +1,4 @@
-from core.scanner.heuristics.server_analyzer.rules.server_rules import SSLVerifyRule, DNSVerifyRule, DomainAgeRule
+from core.scanner.heuristics.server_analyzer.rules.server_rules import SSLVerifyRule, DNSVerifyRule, DomainAgeRule, NameServerDiversityRule, RDAPFieldIncompletenessRule
 from core.scanner.heuristics.url_analyzer.url_structure import extract_structure
 from core.scanner.score.sigmoid import sigmoid
 from core.scanner.score.weighted_average import weighted_average
@@ -12,7 +12,7 @@ def _run():
     start = time()
 
     structure = extract_structure(url) or {}
-    rules = [SSLVerifyRule(), DomainAgeRule(), DNSVerifyRule()]
+    rules = [SSLVerifyRule(), DomainAgeRule(), DNSVerifyRule(), NameServerDiversityRule(), RDAPFieldIncompletenessRule()]
 
     scores = []
     weights = []

@@ -1,4 +1,4 @@
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 from tldextract import extract
 
 def extract_structure(url: str):
@@ -67,40 +67,44 @@ def extract_structure(url: str):
     if not url:
         return None
 
+    original_url = url
+
     if not url.startswith(("http://", "https://")):
         url = "http://" + url
 
     parsed = urlparse(url)
-    ext = extract(url)
 
     hostname = parsed.hostname
-    registered_domain = f"{ext.domain}.{ext.suffix}"
-
     if not hostname:
         return None
 
-    query_params = parse_qs(parsed.query)
-    subs = [s for s in ext.subdomain.split(".") if s and s.lower() != "www"] if ext.subdomain else []
+    hostname = hostname.lower()
+
+    ext = extract(hostname)
+
+    registered_domain = ext.registered_domain
+
+    subs = ext.subdomain.split(".") if ext.subdomain else []
     subdomain_count = len(subs)
 
+    query = parsed.query
+    query_param_count = query.count("&") + 1 if query else 0
+
     return {
-        "url": url,
+        "url": original_url,
         "scheme": parsed.scheme,
         "hostname": hostname,
         "registered_domain": registered_domain,
+        "tld": ext.suffix,
         "subdomain": subs,
         "port": parsed.port,
-        "netloc": parsed.netloc,
         "path": parsed.path,
-        "params": parsed.params,
-        "query": parsed.query,
         "fragment": parsed.fragment,
-        "url_length": len(url),
-        "domain_length": len(registered_domain),
+        "url_length": len(original_url),
+        "domain_length": len(hostname),
         "path_length": len(parsed.path),
         "subdomain_count": subdomain_count,
         "hyphen_count": hostname.count("-"),
-        "equal_count": hostname.count("="),
-        "query_param_count": len(query_params),
-        "query_length": len(parsed.query)
-    }   
+        "query_param_count": query_param_count,
+        "query_length": len(query)
+    }
