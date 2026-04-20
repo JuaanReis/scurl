@@ -98,14 +98,14 @@ DEPENDENCIES: dict[str, list[dict]] = {
             "depends_on": "domain_age",
             "condition": lambda v: v is not None and v < 0.1,
             "action": "reduce",
-            "factor": 0.2,
+            "factor": 0.5,  
             "reason": "DNS suspeito mas domínio muito antigo — provavelmente CDN ou balanceamento legítimo",
         },
         {
             "depends_on": "domain_age",
             "condition": lambda v: v is not None and v < 0.3,
             "action": "reduce",
-            "factor": 0.5,
+            "factor": 0.75,  
             "reason": "DNS suspeito mas domínio estabelecido — configuração não convencional mas legítima",
         },
         {
@@ -243,14 +243,7 @@ DEPENDENCIES: dict[str, list[dict]] = {
             "action": "reduce",
             "factor": 0.3,
             "reason": "subdomínio suspeito mas SSL válido em domínio estabelecido — plataforma de hosting legítima",
-        },
-        {
-            "depends_on": "domain_age",
-            "condition": lambda v: v is not None and v < 0.1,
-            "action": "reduce",
-            "factor": 0.3,
-            "reason": "subdomínio suspeito em domínio muito antigo — plataforma cloud legítima com subdomínios gerados",
-        },
+        },  
         {
             "depends_on": "dns_verify",
             "condition": lambda v: v is not None and v < 0.2,
@@ -278,6 +271,13 @@ DEPENDENCIES: dict[str, list[dict]] = {
             "action": "increase",
             "factor": 1.3,
             "reason": "subdomínio suspeito + path suspeito — URL de phishing estruturada em plataforma",
+        },
+        {
+            "depends_on": "password_input_check",
+            "condition": lambda v: v is not None and v >= 1.0,
+            "action": "increase",
+            "factor": 1.6,
+            "reason": "subdomínio suspeito + campo de senha — credential harvesting confirmado em plataforma cloud",
         },
     ],
     "subdomain_count": [

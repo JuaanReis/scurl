@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from app.routes.scan import router as scan_router
+from .router.analyze import router
 
-app = FastAPI()
-
-app.include_router(scan_router)
+app = FastAPI(title="scurl API")
+app.include_router(router)

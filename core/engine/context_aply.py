@@ -1,8 +1,20 @@
-from ..engine.dependencies import DEPENDENCIES
+from core.engine.dependencies import DEPENDENCIES
 
-
-def apply_dependencies(name: str, value: float | None, weight: float, results_map: dict[str, float | None]) -> tuple[float | None, float, list[str]]:
+def apply_dependencies(
+    name: str,
+    value: float | None,
+    weight: float,
+    results_map: dict[str, float | None]
+) -> tuple[float | None, float, list[str]]:
     reasons: list[str] = []
+
+    if value is None:
+        return None, weight, reasons
+
+    best_reduce: float | None = None   
+    best_increase: float | None = None 
+    reduce_reasons: list[str] = []
+    increase_reasons: list[str] = []
 
     for dep in DEPENDENCIES.get(name, []):
         source_value = results_map.get(dep["depends_on"])
@@ -21,8 +33,28 @@ def apply_dependencies(name: str, value: float | None, weight: float, results_ma
             reasons.append(dep["reason"])
             return None, weight, reasons
 
-        if action in ("reduce", "increase") and value is not None and value > 0:
-            weight *= dep["factor"]
-            reasons.append(dep["reason"])
+        if action == "reduce":
+            if best_reduce is None or dep["factor"] > best_reduce:
+                best_reduce = dep["factor"]
+                reduce_reasons = [dep["reason"]]
+            elif dep["factor"] == best_reduce:
+                reduce_reasons.append(dep["reason"])
 
-    return value, weight, reasons
+        elif action == "increase":
+            if best_increase is None or dep["factor"] > best_increase:
+                best_increase = dep["factor"]
+                increase_reasons = [dep["reason"]]
+            elif dep["factor"] == best_increase:
+                increase_reasons.append(dep["reason"])
+
+    adj_value = value
+
+    if best_reduce is not None:
+        adj_value *= best_reduce
+        reasons.extend(reduce_reasons)
+
+    if best_increase is not None:
+        adj_value = min(1.0, adj_value * best_increase)
+        reasons.extend(increase_reasons)
+
+    return adj_value, weight, reasons

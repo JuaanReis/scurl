@@ -16,7 +16,7 @@ def password_input_check(tree: HTMLParser | None, structure: dict) -> ResultBase
     return ResultBase(
         value=1.0 if has_password else 0.0,
         normalized=1.0 if has_password else None,
-        weight=3.0,
+        weight=4.0,
         details={
             "has_password_input": has_password,
             "password_input_count": len(password_inputs)
