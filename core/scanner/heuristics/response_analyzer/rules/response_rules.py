@@ -9,12 +9,14 @@ from ..check.hidden_fields import hidden_fields_check
 from ..check.password_input import password_input_check
 from ..check.form_action import form_action_check
 from ..check.response import parse_html_response
+from core.engine.rule_registry import register
 
 class ParseHtmlResponseRule():
     def run(self, context):
         tree, structure, response = parse_html_response(context)
         return BodyRule(html=tree, structure=structure, response=response) 
     
+@register
 class ExternalScriptRule(ScanRule):
     def __init__(self):
         super().__init__(name="external_script", category="response", severity="medium")
@@ -23,6 +25,7 @@ class ExternalScriptRule(ScanRule):
         data = external_script(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class FaviconRule(ScanRule):
     def __init__(self):
         super().__init__(name="favicon_check", category="response", severity="medium")
@@ -31,6 +34,7 @@ class FaviconRule(ScanRule):
         data = favicon_check(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class ImageSrcRule(ScanRule):
     def __init__(self):
         super().__init__(name="image_src_check", category="response", severity="medium")
@@ -39,6 +43,7 @@ class ImageSrcRule(ScanRule):
         data = image_src_check(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class RedirectRule(ScanRule):
     def __init__(self):
         super().__init__(name="redirect_check", category="response", severity="medium")
@@ -47,6 +52,7 @@ class RedirectRule(ScanRule):
         data = redirect_check(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class HiddenFieldsRule(ScanRule):
     def __init__(self):
         super().__init__(name="hidden_fields_check", category="response", severity="medium")
@@ -55,6 +61,7 @@ class HiddenFieldsRule(ScanRule):
         data = hidden_fields_check(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class PasswordInputRule(ScanRule):
     def __init__(self):
         super().__init__(name="password_input_check", category="response", severity="medium")
@@ -63,6 +70,7 @@ class PasswordInputRule(ScanRule):
         data = password_input_check(context.get('html_parser'), context)
         return ScanResult(name=self.name, value=data.normalized, weight=data.weight, category=self.category, severity=self.severity, details=data.details)
     
+@register
 class FormActionRule(ScanRule):
     def __init__(self):
         super().__init__(name="form_action_check", category="response", severity="high")

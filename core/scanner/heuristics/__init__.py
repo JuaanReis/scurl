@@ -93,3 +93,9 @@ Para adicionar novas heurísticas:
 3. Integrar nos módulos de regras apropriados
 4. Atualizar testes unitários
 """
+
+from core.scanner.heuristics.server_analyzer.rules import server_rules
+from core.scanner.heuristics.url_analyzer.rules import character_rules
+from core.scanner.heuristics.url_analyzer.rules import domain_rules
+from core.scanner.heuristics.url_analyzer.rules import parts_rules
+from core.scanner.heuristics.response_analyzer.rules import response_rules

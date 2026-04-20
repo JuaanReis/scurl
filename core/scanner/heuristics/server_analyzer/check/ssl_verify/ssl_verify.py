@@ -113,7 +113,7 @@ def ssl_score(structure: dict) -> ResultBase:
         ]
     ]
 
-    f_score = sigmoid(score[0], score[1]) / 100 if sum(score[1]) > 0 else 0.0
+    f_score = sigmoid(score[0], score[1], k=5) / 100 if sum(score[1]) > 0 else 0.0
 
     return ResultBase (
         value = f_score,
