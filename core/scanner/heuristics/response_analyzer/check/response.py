@@ -5,6 +5,9 @@ from selectolax.parser import HTMLParser
 def parse_html_response(structure: dict) -> tuple[HTMLParser | None, dict, HTTPResult | None]:
 
     url = structure.get("url", "")
+    if not url:
+        return None, structure, None
+    
     response = get_response(url)
 
     if response is None:

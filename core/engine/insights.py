@@ -145,15 +145,15 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
 
     if score >= 70:
         msgs.append(
-            f"Pontuação crítica ({score:.1f}) — múltiplos sinais convergentes de ameaça."
+            f"Pontuação crítica [{score:.1f}] — múltiplos sinais convergentes de ameaça."
         )
     elif score >= 45:
         msgs.append(
-            f"Pontuação elevada ({score:.1f}) — sinais relevantes que justificam investigação."
+            f"Pontuação elevada [{score:.1f}] — sinais relevantes que justificam investigação."
         )
     elif score >= 20:
         msgs.append(
-            f"Pontuação moderada ({score:.1f}) — alguns indicadores suspeitos detectados."
+            f"Pontuação moderada [{score:.1f}] — alguns indicadores suspeitos detectados."
         )
 
     return msgs
