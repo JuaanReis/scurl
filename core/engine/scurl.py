@@ -3,102 +3,54 @@ from __init__ import __version__
 from time import time 
 from datetime import UTC, datetime 
 from core.engine.context_aply import apply_dependencies
-from .typeError_request import typeError_request
 from .classification import classify
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout, as_completed
 from core.scanner.heuristics.response_analyzer.rules.response_rules import ExternalScriptRule, FaviconRule, FormActionRule, HiddenFieldsRule, ImageSrcRule, ParseHtmlResponseRule, PasswordInputRule, RedirectRule
 from core.scanner.heuristics.server_analyzer.rules.server_rules import DNSVerifyRule, DomainAgeRule, SSLVerifyRule, RDAPFieldIncompletenessRule, NameServerDiversityRule
 from core.scanner.heuristics.url_analyzer.rules.character_rules import AtRiskRule, EqualRiskRule, HyphenRiskRule, MixEncodingRule, NumRatioRiskRule, XSSPatternRule
 from core.scanner.heuristics.url_analyzer.rules.domain_rules import IPInURLRule, RandomDomainRiskRule, RandomSubdomainRiskRule, SubdomainCountRule
 from core.scanner.heuristics.url_analyzer.rules.parts_rules import Base64SegmentRule, FragmentRiskRule, PathDepthRiskRule, QueryContainsURLRule, QueryNoValueRule, RandomPathRiskRule
-from core.scanner.heuristics.url_analyzer.url_structure import extract_structure
 from core.scanner.score.sigmoid import sigmoid
 from .insights import insights
+from .url_extract.get_structure import get_structure
+from .url_validator import url_validator, response_validator
 
-rules = [
-    SSLVerifyRule(), DomainAgeRule(), DNSVerifyRule(), RDAPFieldIncompletenessRule(), NameServerDiversityRule(),
-    NumRatioRiskRule(), MixEncodingRule(), AtRiskRule(), HyphenRiskRule(), EqualRiskRule(), XSSPatternRule(),
-    RandomPathRiskRule(), QueryNoValueRule(), QueryContainsURLRule(), Base64SegmentRule(), PathDepthRiskRule(), FragmentRiskRule(),
-    IPInURLRule(), SubdomainCountRule(), RandomDomainRiskRule(), RandomSubdomainRiskRule(),
-    ExternalScriptRule(), FaviconRule(), ImageSrcRule(),
-    RedirectRule(), HiddenFieldsRule(), PasswordInputRule(), FormActionRule()
+RULES = [
+    SSLVerifyRule, DomainAgeRule, DNSVerifyRule, RDAPFieldIncompletenessRule, NameServerDiversityRule,
+    NumRatioRiskRule, MixEncodingRule, AtRiskRule, HyphenRiskRule, EqualRiskRule, XSSPatternRule,
+    RandomPathRiskRule, QueryNoValueRule, QueryContainsURLRule, Base64SegmentRule, PathDepthRiskRule, FragmentRiskRule,
+    IPInURLRule, SubdomainCountRule, RandomDomainRiskRule, RandomSubdomainRiskRule,
+    ExternalScriptRule, FaviconRule, ImageSrcRule,
+    RedirectRule, HiddenFieldsRule, PasswordInputRule, FormActionRule
 ]
 
 MAX_SCAN_SECONDS = 15
 
-def run_engine(url: str, processors: int = 3) -> dict:
-    if not url:
-        return {
-            "status": "error",
-            "meta": {
-                "url": None,
-                "scan_time_s": 0,
-                "version": __version__
-            },
-            "error": {
-                "type": "missing_url",
-                "message": "URL não informada"
-            }
-        }
-
-    url = url.strip()
-
-    if not url.lower().startswith(("http://", "https://")):
-        return {
-            "status": "error",
-            "meta": {
-                "url": url,
-                "scan_time_s": 0,
-                "version": __version__
-            },
-            "error": {
-                "type": "missing_protocol",
-                "message": "URL inválida"
-            }
-        }
+def run_engine(url: str, processors: int = 2) -> dict:
+    error = url_validator.url_validator(url)
+    if error:
+        return error
 
     start = time()
     try:
-        structure = extract_structure(url) or {}
-        body_result = ParseHtmlResponseRule().run(structure)
-        structure["html_parser"] = getattr(body_result, "html", None)
-        response = body_result.response
+        structure, response = get_structure(url)
+        error = response_validator.response_validator(response, url, start)
 
-        if response is None:
-            error_type = "Connection failure"
-            message = "Site não respondeu ou DNS falhou"
-
-        elif response.status >= 400:
-            error_type, message = typeError_request(response.status)
-
-        else:
-            error_type = None
-
-        if error_type:
-            return {
-                "status": "error",
-                "meta": {
-                    "url": url,
-                    "scan_time_s": round(time() - start, 3),
-                    "version": __version__
-                },
-                "error": {
-                    "type": error_type,
-                    "message": message
-                }
-            }
+        if error:
+            return error
 
         scores, weights = [], []
         
         results_map: dict[str, float | None] = {}
         heuristics = []
+        rules = [rule() for rule in RULES]
 
-        with ThreadPoolExecutor(max_workers=min(processors, 3)) as executor:
-            futures = [executor.submit(lambda r=rule: r.run(structure), rule) for rule in rules]
+        with ThreadPoolExecutor(max_workers=min(processors, 8)) as executor:
+            futures = [executor.submit(rule.run, structure) for rule in rules]
             results = []
-            for f in futures:
+            for future in as_completed(futures, timeout=MAX_SCAN_SECONDS):
                 try:
-                    results.append(f.result(timeout=MAX_SCAN_SECONDS))
+                    results.append(future.result())
                 except FuturesTimeout:
                     return {
                         "status": "error",
@@ -183,6 +135,7 @@ def run_engine(url: str, processors: int = 3) -> dict:
         }
     
     except Exception as e:
+        import traceback
         return {
             "status": "error",
             "meta": {
@@ -191,12 +144,8 @@ def run_engine(url: str, processors: int = 3) -> dict:
                 "version": __version__
             },
             "error": {
-                "type": type(e).__name__, 
-                "message": str(e)
+                "type": type(e).__name__,
+                "message": str(e),
+                "trace": traceback.format_exc()
             }
         }
-    
-if __name__ == "__main__":
-    import json
-    url = input("> ")
-    print(json.dumps(run_engine(url), indent=4, ensure_ascii=False))

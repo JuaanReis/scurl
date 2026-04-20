@@ -1,22 +1,24 @@
 def print_output(data: dict, verbose: bool = False):
-    if data["status"] == "error":
-        err = data["error"]
-        print(f"FALHA {err['type']}: {err['message']}")
+    status = data.get("status")
+    if status == "error":
+        err: dict = data.get("error", {})
+        print(f"FALHA {err.get('type')}: {err.get('message')}")
         return
 
-    meta = data["meta"]
-    result = data["result"]
-    stats = data["stats"]
-    heuristics = data["heuristics"]
+    meta: dict = data.get("meta", {})
+    result: dict = data.get("result", {})
+    stats: dict = data.get("stats", {})
+    heuristics: list = data.get("heuristics", [])
 
-    skipped = stats["rules_total"] - stats["rules_triggered"]
+    skipped = max(0, stats.get("rules_total", 0) - stats.get("rules_triggered", 0))
+
     if skipped > 0:
         print(f"\nOcultas: {skipped} regras ignoradas (contribuição ≈ 0)")
 
     if heuristics:
-        col_mod  = max(len(h["category"]) for h in heuristics)
-        col_rule = max(len(h["name"]) for h in heuristics)
-        col_val  = max(len(str(h["value"])) for h in heuristics)
+        col_mod  = max(len(str(h.get("category",""))) for h in heuristics)
+        col_rule = max(len(h.get("name", "")) for h in heuristics)
+        col_val = max(len(str(h.get("value", ""))) for h in heuristics)
 
         print(f"\n{'MÓDULO'.ljust(col_mod)}  {'REGRA'.ljust(col_rule)} {'VALOR'.rjust(col_val)}   PESO  CONTRIB")
 
@@ -25,18 +27,23 @@ def print_output(data: dict, verbose: bool = False):
                 f"{h['category'].ljust(col_mod).upper()}  "
                 f"{h['name'].ljust(col_rule)}  "
                 f"{str(h['value']).rjust(col_val)}  "
-                f"  {h['weight']:.1f}",
-                f"     {h['contribution']}"
+                f"  {h['weight']:.1f}     {h['contribution']}"
             )
 
             if verbose and h.get("reasons"):
-                for reason in h["reasons"]:
+                for reason in h.get("reasons", []):
                     print(f"{''.ljust(col_mod)}    * {reason}")
     
-    if data["insight"]:
+    if data.get("insight"):
         print("\nObservações:")
-        for msg in data["insight"]:
+        for msg in data.get("insight", []):
             print(f"  * {msg}")
 
-    print(f"\nPontuação: {result['score']}  Risco: {result['risk_level'].upper()}  Veredito: {str(result['verdict']).upper()}")
-    print(f"\nScurl concluído: {stats['rules_total']} regras testadas, {stats['rules_triggered']} disparadas — finalizado em {meta['scan_time_s']:.2f}s")
+    print(
+        f"\nPontuação: {result.get('score')}  Risco: {str(result.get('risk_level', '')).upper()}  "
+        f"Veredito: {str(result.get('verdict', '')).upper()}"
+    )
+    print(
+        f"Scurl concluído: {stats.get('rules_total', 0)} regras testadas, "
+        f"{stats.get('rules_triggered', 0)} disparadas — finalizado em {meta.get('scan_time_s', 0):.2f}s"
+    )

@@ -1,4 +1,9 @@
-def typeError_request(status_code: int) -> tuple[str, str]:
+from time import time
+
+from core.models.http_result import HTTPResult
+from __init__ import __version__
+
+def _typeError_request(status_code: int) -> tuple[str, str]:
     error_type, message = "", ""
 
     if status_code == 400:
@@ -50,3 +55,31 @@ def typeError_request(status_code: int) -> tuple[str, str]:
         message = f"Erro HTTP {status_code}"
 
     return error_type, message
+
+def response_validator(response: HTTPResult, url: str, start: float) -> dict | None:
+    if response is None:
+        error_type = "Connection failure"
+        message = "Site não respondeu ou DNS falhou"
+
+    elif response.status >= 400:
+        error_type, message = _typeError_request(response.status)
+
+    else:
+        error_type = None
+
+    if error_type:
+        return {
+            "status": "error",
+            "meta": {
+                "url": url,
+                "scan_time_s": round(time() - start, 3),
+                "version": __version__
+            },
+            "error": {
+                "type": error_type,
+                "message": message
+            }
+        }
+    
+    else: 
+        return None
