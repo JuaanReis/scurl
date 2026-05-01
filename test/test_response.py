@@ -1,9 +1,9 @@
-from core.scanner.heuristics.response_analyzer.rules.response_rules import (
+from core.heuristics.response_analyzer.rules.response_rules import (
     ParseHtmlResponseRule,
     ExternalScriptRule, FaviconRule, IframeRule, ImageSrcRule,
     RedirectRule, HiddenFieldsRule, PasswordInputRule, FormActionRule
 )
-from core.scanner.heuristics.url_analyzer.url_structure import extract_structure
+from core.heuristics.url_analyzer.url_structure import extract_structure
 from core.scanner.score.sigmoid import sigmoid
 
 def _run_engine():

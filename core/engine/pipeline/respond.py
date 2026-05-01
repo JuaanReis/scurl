@@ -2,7 +2,7 @@ from uuid import uuid4
 from time import time
 from datetime import UTC, datetime
 from core.models.scan_context import ScanContext
-from core.engine.insights import insights
+from core.engine.analysis.insights import insights
 from __init__ import __version__
 
 def build_error_response(ctx: ScanContext, error_type: str, message: str) -> dict:

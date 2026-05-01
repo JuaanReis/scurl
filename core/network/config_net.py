@@ -1,4 +1,4 @@
-from httpx import Client, Timeout, Limits, HTTPStatusError, ConnectError, RequestError
+from httpx import Client, Timeout, Limits, HTTPStatusError, ConnectError, RequestError, Timeout
 from __init__ import __version__
 
 client = Client(
@@ -9,6 +9,6 @@ client = Client(
     limits=Limits(max_keepalive_connections=10, max_connections=20),
     headers={
         "Accept-Encoding": "gzip, br",
-        "User-Agent": f"URL-Security-Analyzer/{__version__} (Academic Research)"
+        "User-Agent": f"SCURL/{__version__}"
     }
 )

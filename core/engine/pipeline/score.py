@@ -1,9 +1,9 @@
+from core.engine.registry.context_apply import apply_dependencies
 from core.models.scan_context import ScanContext
-from core.engine.context_aply import apply_dependencies
-from core.engine.classification import classify
-from core.scanner.score.sigmoid import sigmoid
+from core.engine.analysis.classification import classify
+from core.math.sigmoid import sigmoid
 
-def calculate_score(ctx: ScanContext) -> None:
+def calculate_score(ctx: ScanContext, k: int = 5) -> None:
     for result in ctx.results:
         adj_value, adj_weight, dep_reasons = apply_dependencies(
             result.name,
@@ -29,5 +29,5 @@ def calculate_score(ctx: ScanContext) -> None:
                 "reasons": dep_reasons
             })
 
-    ctx.score = sigmoid(ctx.scores, ctx.weights)
+    ctx.score = sigmoid(ctx.scores, ctx.weights, k)
     ctx.classification, ctx.risk = classify(ctx.score)

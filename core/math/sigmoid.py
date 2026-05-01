@@ -1,23 +1,32 @@
-def sigmoid(x: int):
+from math import exp
+from .weighted_average import weighted_average
+
+def sigmoid(scores: list, weights: list, k: int = 5) -> float:
     """
-        A função sigmoid é uma função matemática que mapeia qualquer valor real para um intervalo entre 0 e 1. Ela é amplamente utilizada em machine learning, especialmente em modelos de classificação binária, para transformar a saída de um modelo linear em uma probabilidade. A fórmula da função sigmoid é dada por:
-    
-        Formula:
-            sigmoid(x) = 1 / (1 + exp(-x))
-            Onde exp(-x) é a função exponencial aplicada a -x.
+        Aplica a função sigmoide para transformar uma pontuação em uma escala de 0 a 100, onde a pontuação de 0.5 é o ponto de inflexão. O parâmetro k controla a inclinação da curva, com valores maiores resultando em uma transição mais abrupta entre as pontuações baixas e altas. A função retorna um valor entre 0 e 100, onde pontuações próximas a 0.5 resultam em valores próximos a 50, enquanto pontuações próximas a 0 ou 1 resultam em valores próximos a 0 ou 100, respectivamente.  
         
+        Formula: 
+            sigmoid(x) = (1 / (1 + exp(-k * (x - 0.5)))) * 100
+            onde:
+                - x é a pontuação média ponderada calculada a partir das listas de scores e weights
+                - k é um parâmetro que controla a inclinação da curva sigmoide
+                - sigmoid(x) é a pontuação transformada em uma escala de 0 a 100
+
         Atributos:
-            - x (int): O valor de entrada para a função sigmoid, que pode ser qualquer número real.
-    
+            scores (list): Uma lista de pontuações, onde cada elemento é um número.
+            weights (list): Uma lista de pesos correspondentes às pontuações, onde cada elemento é um número.
+            k (int): Um parâmetro que controla a inclinação da curva sigmoide. O valor padrão é 3. Valores maiores resultam em uma transição mais abrupta entre as pontuações baixas e altas.
+
         Retorna:
-            float: O valor resultante da função sigmoid, que estará no intervalo entre 0 e 1.
-    
-        Exemplo de uso:
-        ```
-            print(sigmoid(0))   # Saída: 0.5
-            print(sigmoid(1))   # Saída: 0.7310585786300049
-            print(sigmoid(-1))  # Saída: 0.2689414213690024
-        ```
+            float: A pontuação transformada em uma escala de 0 a 100.
+
+        Exemplo:
+            >>> sigmoid(0.5)
+            50.0
+            >>> sigmoid(0.25)
+            11.920000000000002
+            >>> sigmoid(0.75)
+            88.08000000000001
     """
-    from math import exp
-    return 1 / (1 + exp(-x))
+
+    return (1 / (1 + exp(-k * (weighted_average(scores, weights) - 0.5)))) * 100

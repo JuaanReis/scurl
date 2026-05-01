@@ -1,5 +1,5 @@
 from core.network.get_request import get_response
-from core.scanner.heuristics.response_analyzer.response_normalizator import normalize
+from core.heuristics.response_analyzer.response_normalizator import normalize
 
 def _run_test():
     """

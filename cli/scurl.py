@@ -5,7 +5,9 @@ from .args import parse_args
 from datetime import datetime, timezone
 from __init__ import __version__
 
-def shorten(text, n=56):
+def shorten(text, n=56) -> str:
+    if not text:
+        return ""
     return text if len(text) <= n else text[:n-3] + "..."
 
 def main():
@@ -13,15 +15,15 @@ def main():
     url = args.url
 
     if args.output == "-":
-        data = run_engine(url, args.threads)
+        data = run_engine(url, args.k, args.timeout, args.threads, args.retries)
         save_output("-", data)
         return
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    print(f"Iniciando Scurl {__version__} (https://github.com/JuaanReis/scurl) em {ts}")
+    print(f"Iniciando Scurl {__version__} às {ts}")
     print(f"Relatório de análise para {shorten(url)}")
-    data = run_engine(url, args.threads)
+    data = run_engine(url, args.k, args.timeout, args.threads, args.retries)
 
     print_output(data, args.verbose)
 

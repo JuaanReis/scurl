@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 from html.parser import HTMLParser
+from typing import Any
 from core.models.http_result import HTTPResult
-from core.models.scan_result import ScanResult
 
-@dataclass
-class BodyRule:
+@dataclass(frozen=True)
+class ScanContext:
 
     html: HTMLParser
-    structure: dict
+    structure: dict[str, Any]
     response: HTTPResult
-    
-    def run(self, context: dict) -> ScanResult:
-        raise NotImplementedError
