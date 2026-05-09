@@ -3,7 +3,7 @@ from core.heuristics.response_analyzer.rules.response_rules import (
     ExternalScriptRule, FaviconRule, IframeRule, ImageSrcRule,
     RedirectRule, HiddenFieldsRule, PasswordInputRule, FormActionRule
 )
-from core.heuristics.url_analyzer.url_structure import extract_structure
+from parser.url_structure_extract import extract_structure
 from core.scanner.score.sigmoid import sigmoid
 
 def _run_engine():

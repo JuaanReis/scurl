@@ -1,7 +1,7 @@
 from core.heuristics.url_analyzer.rules.character_rules import NumRatioRiskRule, MixEncodingRule, AtRiskRule, HyphenRiskRule, EqualRiskRule, XSSPatternRule
 from core.heuristics.url_analyzer.rules.parts_rules import RandomPathRiskRule, QueryNoValueRule, QueryContainsURLRule, Base64SegmentRule, PathDepthRiskRule, FragmentRiskRule
 from core.heuristics.url_analyzer.rules.domain_rules import IPInURLRule, SubdomainCountRule, RandomDomainRiskRule, RandomSubdomainRiskRule
-from core.heuristics.url_analyzer.url_structure import extract_structure
+from parser.url_structure_extract import extract_structure
 from core.scanner.score.sigmoid import sigmoid
 from core.scanner.score.weighted_average import weighted_average
 from time import time

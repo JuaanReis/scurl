@@ -1,11 +1,13 @@
+from .classify_attacks import classify_attacks
+
 def insights(heuristics: list[dict], score: float) -> list[str]:
     values = {h["name"]: h["value"] for h in heuristics}
-    msgs = []
-
-    MAX_INSIGHTS = 5
 
     def active(rule: str, threshold: float = 0.5) -> bool:
         return values.get(rule, 0) >= threshold
+
+    attacks = classify_attacks(heuristics)
+    attack_msgs = [a.description for a in attacks]
 
     patterns = [
         (
@@ -20,7 +22,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["domain_age", "dns_verify"],
             "Domínio novo com configuração DNS incomum — possível infraestrutura descartável."
         ),
-
         (
             ["random_domain_risk", "hyphen_risk", "num_ratio_risk"],
             "Domínio com alta entropia, hífens e números — perfil compatível com geração automática (DGA)."
@@ -37,7 +38,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["random_domain_risk", "domain_age"],
             "Domínio com padrão aleatório recém-registrado — típico de campanhas descartáveis."
         ),
-
         (
             ["random_path_risk", "base64_segment"],
             "Segmento base64 em path aleatório — possível payload ofuscado."
@@ -50,7 +50,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["base64_segment", "mix_encoding"],
             "Base64 e encoding misto na mesma URL — múltiplas camadas de obfuscação."
         ),
-
         (
             ["query_contains_url", "mix_encoding"],
             "URL embutida na query com encoding misto — possível open redirect com obfuscação."
@@ -59,7 +58,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["query_contains_url", "query_no_value"],
             "URL na query combinada com parâmetros vazios — estrutura típica de redirecionamento."
         ),
-
         (
             ["xss_pattern", "mix_encoding"],
             "Padrão XSS combinado com encoding misto — possível evasão de filtros."
@@ -68,7 +66,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["xss_pattern", "fragment_risk"],
             "Padrão XSS no fragmento da URL — possível ataque DOM-based."
         ),
-
         (
             ["at_risk", "query_contains_url"],
             "Uso de '@' com URL na query — técnica clássica de mascaramento de destino."
@@ -77,7 +74,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["at_risk", "mix_encoding"],
             "Uso de '@' com encoding misto — tentativa de confundir parsers de URL."
         ),
-
         (
             ["subdomain_count", "random_subdomain_risk"],
             "Múltiplos subdomínios com padrão aleatório — infraestrutura automatizada."
@@ -86,7 +82,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["random_subdomain_risk", "domain_age"],
             "Subdomínio aleatório em domínio novo — possível phishing descartável."
         ),
-
         (
             ["form_action_check", "password_input_check"],
             "Formulário com campo de senha e ação suspeita — possível coleta de credenciais."
@@ -99,7 +94,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["password_input_check", "domain_age", "form_action_check"],
             "Domínio novo com formulário de senha — possível credential harvesting."
         ),
-
         (
             ["favicon_check", "password_input_check"],
             "Favicon externo com campo de senha — possível clone de site legítimo."
@@ -112,7 +106,6 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
             ["external_script", "favicon_check", "domain_age"],
             "Scripts e favicon externos em domínio novo — clone de site legítimo provável."
         ),
-
         (
             ["redirect_check", "random_domain_risk"],
             "Redirecionamento externo em domínio aleatório — possível evasão de detecção."
@@ -129,31 +122,34 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
 
     patterns = sorted(patterns, key=lambda x: len(x[0]), reverse=True)
 
+    MAX_TOTAL = 6
+    pattern_slots = max(0, MAX_TOTAL - len(attack_msgs) - 1)
+
     used_rules = set()
+    pattern_msgs = []
 
     for rules, message in patterns:
+        if len(pattern_msgs) >= pattern_slots:
+            break
 
         if any(r in used_rules for r in rules):
             continue
 
         if all(active(r) for r in rules):
-            msgs.append(message)
+            pattern_msgs.append(message)
             used_rules.update(rules)
 
-        if len(msgs) >= MAX_INSIGHTS:
-            break
-
     if score >= 70:
-        msgs.append(
-            f"Pontuação crítica [{score:.1f}] — múltiplos sinais convergentes de ameaça."
-        )
+        score_msg = f"Pontuação crítica [{score:.1f}] — múltiplos sinais convergentes de ameaça."
     elif score >= 45:
-        msgs.append(
-            f"Pontuação elevada [{score:.1f}] — sinais relevantes que justificam investigação."
-        )
+        score_msg = f"Pontuação elevada [{score:.1f}] — sinais relevantes que justificam investigação."
     elif score >= 20:
-        msgs.append(
-            f"Pontuação moderada [{score:.1f}] — alguns indicadores suspeitos detectados."
-        )
+        score_msg = f"Pontuação moderada [{score:.1f}] — alguns indicadores suspeitos detectados."
+    else:
+        score_msg = None
+
+    msgs = attack_msgs + pattern_msgs
+    if score_msg:
+        msgs.append(score_msg)
 
     return msgs

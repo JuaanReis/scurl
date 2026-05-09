@@ -1,5 +1,5 @@
-from core.network.get_request import get_response
-from core.heuristics.response_analyzer.response_normalizator import normalize
+from providers.http.connect import get_response
+from features.normalize_response import normalize
 
 def _run_test():
     """

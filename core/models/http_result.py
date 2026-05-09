@@ -34,3 +34,4 @@ class HTTPResult:
     elapsed: float
     size: int
     redirects: int = 0
+    redirect_chain: list = None

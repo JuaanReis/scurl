@@ -1,3 +1,23 @@
+from .infer import infer, _get_heuristic_details
+from .assessment import print_assessment
+from .sections import (
+    print_target,
+    print_network,
+    print_redirect_chain,
+    print_infrastructure,
+    print_security_posture,
+    print_tls,
+    print_dns,
+    print_fingerprint,
+    print_engine,
+    print_heuristics,
+    print_findings,
+    print_insights,
+    print_risk_vectors,
+    print_risk_score,
+    print_footer,
+)
+
 def print_output(data: dict, verbose: bool = False):
     status = data.get("status")
     if status == "error":
@@ -5,45 +25,35 @@ def print_output(data: dict, verbose: bool = False):
         print(f"FALHA {err.get('type')}: {err.get('message')}")
         return
 
-    meta: dict = data.get("meta", {})
-    result: dict = data.get("result", {})
-    stats: dict = data.get("stats", {})
-    heuristics: list = data.get("heuristics", [])
+    engine:      dict = data.get("engine", {})
+    meta:        dict = data.get("meta", {})
+    result:      dict = data.get("result", {})
+    stats:       dict = data.get("stats", {})
+    target:      dict = data.get("target", {})
+    network:     dict = data.get("network", {})
+    raw:         dict = data.get("raw", {})
+    heuristics:  list = data.get("heuristics", [])
+    insight:     list = data.get("insight", [])
+    headers:     dict = raw.get("headers", {})
 
-    skipped = max(0, stats.get("rules_total", 0) - stats.get("rules_triggered", 0))
+    ssl_details: dict = _get_heuristic_details(data, "ssl_score")
+    dns_details: dict = _get_heuristic_details(data, "dns_score")
 
-    if skipped > 0:
-        print(f"\nOcultas: {skipped} regras ignoradas (contribuição ≈ 0)")
+    inferred = infer(data)
 
-    if heuristics:
-        col_mod  = max(len(str(h.get("category",""))) for h in heuristics)
-        col_rule = max(len(h.get("name", "")) for h in heuristics)
-        col_val = max(len(str(h.get("value", ""))) for h in heuristics)
-
-        print(f"\n{'MÓDULO'.ljust(col_mod)}  {'REGRA'.ljust(col_rule)} {'VALOR'.rjust(col_val)}   PESO  CONTRIB")
-
-        for h in heuristics:
-            print(
-                f"{h['category'].ljust(col_mod).upper()}  "
-                f"{h['name'].ljust(col_rule)}  "
-                f"{str(h['value']).rjust(col_val)}  "
-                f"  {h['weight']:.1f}     {h['contribution']}"
-            )
-
-            if verbose and h.get("reasons"):
-                for reason in h.get("reasons", []):
-                    print(f"{''.ljust(col_mod)}    * {reason}")
-    
-    if data.get("insight"):
-        print("\nObservações:")
-        for msg in data.get("insight", []):
-            print(f"  * {msg}")
-
-    print(
-        f"\nPontuação: {result.get('score')}  Risco: {str(result.get('risk_level', '')).upper()}  "
-        f"Veredito: {str(result.get('verdict', '')).upper()}"
-    )
-    print(
-        f"Scurl concluído: {stats.get('rules_total', 0)} regras testadas, "
-        f"{stats.get('rules_triggered', 0)} disparadas — finalizado em {meta.get('scan_time_s', 0):.2f}s"
-    )
+    print_target(target, inferred)
+    print_network(network, raw, inferred)
+    print_redirect_chain(raw)
+    print_infrastructure(headers, inferred)
+    print_security_posture(headers, inferred)
+    print_tls(ssl_details)
+    print_dns(dns_details, inferred)
+    print_fingerprint(meta, inferred)
+    print_engine(meta, stats)
+    print_heuristics(heuristics)
+    print_findings(heuristics)
+    print_insights(heuristics, insight, inferred)
+    print_risk_vectors(heuristics, headers, inferred, network)
+    print_risk_score(result)
+    print_assessment(result)
+    print_footer(meta)

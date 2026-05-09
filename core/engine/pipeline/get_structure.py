@@ -1,12 +1,11 @@
-from core.models.http_result import HTTPResult
-from core.heuristics.response_analyzer.rules.response_rules import ParseHtmlResponseRule
-from core.heuristics.url_analyzer.url_structure import extract_structure
-from core.network.fetch_rdap import fetch_rdap
+from parser.url_structure_extract import extract_structure
 
-def get_structure(url: str, timeout: float = 5, retries: int = 3) -> tuple[dict, HTTPResult]:
+def get_structure(url: str) -> dict:
+    """
+        Extrai a estrutura de um URL, incluindo informações como o domínio, subdomínio, caminho, etc.
+        Retorna um dicionário com a estrutura do URL, onde as chaves são os tipos de informações extraídas e os valores são os dados correspondentes. Se a estrutura não puder ser extraída, retorna um dicionário vazio.
+    """
     structure = extract_structure(url) or {}
-    body_result = ParseHtmlResponseRule().run(structure, timeout, retries)
-    structure["html_parser"] = getattr(body_result, "html", None)
-    structure["rdap"] = fetch_rdap(structure.get("hostname", ""))
-    response = body_result.response
-    return structure, response
+    structure["html_parser"] = None
+    structure["rdap"] = None
+    return structure
