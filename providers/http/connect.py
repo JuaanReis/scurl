@@ -1,32 +1,31 @@
 import logging
 from time import sleep
-from .client import scan_client, HTTPStatusError, ConnectError, RequestError, Timeout
+from .client import scan_client
+from .retry import backoff_delay, should_retry, get_retry_after
+from httpx import HTTPStatusError, ConnectError, RequestError
 from core.models.http_result import HTTPResult
 
 logger = logging.getLogger(__name__)
 
-def extract_redirect_chain(response):
+def extract_redirect_chain(response) -> list:
     chain = []
-
     for r in response.history:
         chain.append({
             "url": str(r.url),
             "status": r.status_code,
             "location": r.headers.get("location")
         })
-
     chain.append({
         "url": str(response.url),
         "status": response.status_code,
         "location": None
     })
-
     return chain
 
 def _build_result(response) -> HTTPResult:
     headers = dict(response.headers)
     headers.pop("set-cookie", None)
-    headers.pop("Set-Cookie", None)  # Remove os cookies para evitar exposição de informações sensíveis
+    headers.pop("Set-Cookie", None)
 
     return HTTPResult(
         url=str(response.url),
@@ -47,20 +46,14 @@ def get_response(url: str, retries: int = 3, delay: float = 0.6, timeout: float 
 
         except HTTPStatusError as e:
             response = e.response
-
-            if response.status_code == 429:
-                retry_after = int(response.headers.get("Retry-After", 1))
-                sleep(retry_after)
+            if should_retry(response.status_code):
+                sleep(get_retry_after(dict(response.headers)))
                 continue
-
             return _build_result(response)
 
         except (ConnectError, RequestError) as e:
-            logger.warning(
-                "Tentativa %d/%d falhou para %s: %s",
-                attempt + 1, retries, url, e
-            )
-
-            sleep(delay * (2 ** attempt))
+            logger.warning("Tentativa %d/%d falhou para %s: %s", attempt + 1, retries, url, e)
+            if attempt < retries - 1:
+                backoff_delay(attempt, base_delay=delay)
 
     return None

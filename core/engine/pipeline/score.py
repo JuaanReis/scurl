@@ -1,7 +1,7 @@
 from core.engine.pipeline.context_apply import apply_dependencies
 from core.models.scan_context import ScanContext
 from core.engine.analysis.classification import classify
-from scoring.sigmoid import sigmoid
+from core.scoring.sigmoid import sigmoid
 
 def calculate_score(ctx: ScanContext, k: int = 5) -> None:
     for result in ctx.results:

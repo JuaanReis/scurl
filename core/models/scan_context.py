@@ -1,20 +1,22 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from hashlib import sha256
 from time import time
-from urllib.parse import ParseResult
+from urllib.parse import ParseResult, urlparse, urlunparse
 from core.models.http_result import HTTPResult
 
 @dataclass
 class ScanMeta:
     scan_id: str = ""
-    url_hash: str = ""
     threads: int = 1
     start: float = field(default_factory=time)
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    # url_hash removido daqui
 
 @dataclass
 class ScanContext:
     url: str = ""
+    url_hash: str = field(init=False)  # ← declarado aqui
     parsed_url: ParseResult | None = None
     response: HTTPResult | None = None
     html: object | None = None    
@@ -30,3 +32,8 @@ class ScanContext:
     classification: str = ""
     risk: str = ""
     meta: ScanMeta = field(default_factory=ScanMeta)
+
+    def __post_init__(self):
+        parsed = urlparse(self.url)
+        normalized = urlunparse(parsed._replace(path=parsed.path.rstrip("/") or "/"))
+        self.url_hash = sha256(normalized.encode()).hexdigest()

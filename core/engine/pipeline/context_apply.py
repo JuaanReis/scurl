@@ -1,4 +1,4 @@
-from scoring.dependencies import DEPENDENCIES
+from core.scoring.dependencies import DEPENDENCIES
 
 def apply_dependencies(
     name: str,
