@@ -42,5 +42,14 @@ class ScanContext:
     def __post_init__(self):
         if self.target.url and not self.meta.url_hash:
             parsed = urlparse(self.target.url)
-            normalized = urlunparse(parsed._replace(path=parsed.path.rstrip("/") or "/"))
+            hostname = parsed.hostname or ""
+            if hostname.startswith("www."):
+                hostname = hostname[4:]
+            netloc = hostname
+            if parsed.port:
+                netloc = f"{hostname}:{parsed.port}"
+            normalized = urlunparse(parsed._replace(
+                netloc=netloc,
+                path=parsed.path.rstrip("/") or "/"
+            ))
             self.meta.url_hash = sha256(normalized.encode()).hexdigest()

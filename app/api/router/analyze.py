@@ -24,7 +24,7 @@ router = APIRouter()
 @limiter.limit("10/minute")
 async def analyze_url(request: Request, body: AnalyzeRequest):
     scan, target = await asyncio.get_running_loop().run_in_executor(
-        None, partial(run_engine, str(body.url))
+        None, partial(run_engine, str(body.url), use_cache=body.use_cache)
     )
 
     if scan.get("status") == "error":

@@ -5,6 +5,8 @@ from providers.http.connect import get_response
 from providers.rdap.fetch_rdap import fetch_rdap
 from core.parsers.html_parser import parse_html
 from providers.safebrowsing.client import fetch_safe_browsing
+from providers.ssl.info_ssl import get_ssl_cert
+from providers.dns.info_dns import get_dns_info
 
 def collect_target_data(ctx: ScanContext, timeout: float = 5, retries: int = 3) -> dict | None:
     structure = get_structure(ctx.target.url)
@@ -20,6 +22,8 @@ def collect_target_data(ctx: ScanContext, timeout: float = 5, retries: int = 3) 
         if "html" in content_type.lower():
             ctx.target.html = parse_html(response.body)
 
+    ctx.target.dns = get_dns_info(structure.get("hostname", ""))
+    ctx.target.ssl = get_ssl_cert(structure)
     ctx.target.rdap = fetch_rdap(structure.get("hostname", ""))
 
     return response_validator(response, ctx.target.url, ctx.meta.start)

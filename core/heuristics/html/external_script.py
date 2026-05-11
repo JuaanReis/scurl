@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from ipwhois import IPWhois
 from core.models.result_base import ResultBase
 from core.parsers.html_parser import HTMLParser
-from utils.normalize_domain import normalize_domain
+from core.parsers.normalize_domain import normalize_domain
 from ..registry import register
 
 TRUSTED_DOMAINS = {normalize_domain(d) for d in {

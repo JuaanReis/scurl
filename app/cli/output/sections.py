@@ -165,6 +165,10 @@ def print_risk_score(result: dict):
     print(f"{score:.2f} / 100.00")
     print(f"[{bar}] {risk}")
 
-def print_footer(meta: dict):
-    print(f"\nScurl concluído em {float(meta.get('scan_time_s', 0)):.2f}s")
+def print_footer(meta: dict, start_time=None):
+    if start_time is not None:
+        from time import time
+        print(f"\nScurl concluído em {time() - start_time:.2f}s")
+    else:
+        print(f"\nScurl concluído em {float(meta.get('scan_time_s', 0)):.2f}s")
     print("─" * 40)

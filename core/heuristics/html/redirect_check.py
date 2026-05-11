@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse
 from core.models.result_base import ResultBase
-from utils.normalize_domain import normalize_domain
+from core.parsers.normalize_domain import normalize_domain
 from ..registry import register
 
 JS_ASSIGNMENT_PATTERN = re.compile(

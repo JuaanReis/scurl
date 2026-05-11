@@ -14,24 +14,29 @@ def shorten(text, n=56) -> str:
 
 def main():
     try:
-        init_db()
-    except Exception:
-        pass
-    
-    try:
         args = parse_args()
+        cache = args.cache
+        start = None
+        if cache:
+            from time import time
+            start = time()
+        try:
+            init_db()
+        except Exception:
+            cache = False
+            
         url = args.url
 
         if args.output == "-":
-            scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=args.cache)
+            scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=cache)
             save_output("-", scan, target)
             return
 
         print(f"SCURL :: heuristic web analyzer v{__version__}")
         print("─" * 40)
-        scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=args.cache)
+        scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=cache)
 
-        print_output(scan, target, args.verbose)
+        print_output(scan, target, args.verbose, start)
 
         if args.output:
             save_output(args.output, scan, target)

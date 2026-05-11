@@ -18,7 +18,7 @@ from .sections import (
     print_footer,
 )
 
-def print_output(scan: dict, target: dict, verbose: bool = False):
+def print_output(scan: dict, target: dict, verbose: bool = False, time=None):
     status = scan.get("status")
     if status == "error":
         err: dict = scan.get("error", {})
@@ -53,4 +53,4 @@ def print_output(scan: dict, target: dict, verbose: bool = False):
     print_risk_vectors(heuristics, headers, inferred, network)
     print_risk_score(result)
     print_assessment(result)
-    print_footer(meta)
+    print_footer(meta, time)

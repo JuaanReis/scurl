@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 from core.models.result_base import ResultBase
-from utils.normalize_domain import normalize_domain
+from core.parsers.normalize_domain import normalize_domain
 import tldextract
 from ..registry import register
 

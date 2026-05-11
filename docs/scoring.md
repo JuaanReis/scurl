@@ -25,9 +25,7 @@ Além do valor bruto, cada regra possui um peso relativo.
 
 # Média ponderada
 
-```math
-s = \frac{\sum(H_iW_i)}{\sum W_i}
-```
+![formula](https://latex.codecogs.com/svg.image?\color{white}s=\frac{\sum(H_i\cdot%20W_i)}{\sum%20W_i})
 
 Onde:
 
@@ -50,9 +48,7 @@ Para resolver isso, o SCURL aplica uma transformação sigmoide.
 
 # Função sigmoide
 
-```math
-S_f = \frac{1}{1 + e^{-k(s-0.5)}}
-```
+![formula](https://latex.codecogs.com/svg.image?\color{white}S_f=\frac{1}{1+e^{-k(s-0{,}5)}})
 
 Objetivos:
 
