@@ -1,60 +1,30 @@
+from pathlib import Path
 from core.models.result_base import ResultBase
 from datasets.wordlists.wordlist_generator import domain_generator as load_domains
 from core.heuristics.url.typos.index import build_index
 from core.heuristics.url.typos.detect import detect
 from ...registry import register
 
-domains = list(load_domains("./core/wordlists/hostnames_1m.txt"))
-BY_LEN, BY_FIRST = build_index(domains)
+_WORDLIST_PATH = Path(__file__).parent.parent.parent.parent.parent / "datasets" / "wordlists" / "hostnames_1m.txt"
 
-def extract_domain(url: str) -> str:
-    host = url.split("//")[-1].split("/")[0]
-    parts = host.split(".")
+def _load_index() -> dict:
+    try:
+        domains = list(load_domains(str(_WORDLIST_PATH)))
+        return build_index(domains)
+    except Exception:
+        return {}
 
-    if len(parts) >= 2:
-        return parts[-2]
+_BY_LEN = _load_index()
 
-    return host
-   
+@register(name="typosquatting", category="url", severity="high", weight=3.5, tags=["url", "typosquatting", "phishing"])
 def typosquatting(structure: dict) -> ResultBase:
-    """
-        Verifica se o domínio da URL é semelhante a um domínio conhecido, indicando uma possível tentativa de typosquatting.
-        - O typosquatting é uma técnica onde atacantes registram domínios semelhantes a domínios legítimos, com o objetivo de enganar os usuários e redirecioná-los para sites maliciosos.
-        - A função extrai o domínio da URL e o compara com uma lista de domínios conhecidos, utilizando técnicas de detecção de similaridade para identificar possíveis casos de typosquatting.    
-        - O resultado inclui o valor da detecção, uma versão normalizada do domínio e detalhes adicionais sobre a similaridade encontrada.
+    registered_domain = structure.get("registered_domain", "")
+    if not registered_domain:
+        return ResultBase(value=0, normalized=None, details={"error": "domínio não disponível"})
 
-        Atributos:
-            - structure (dict): Um dicionário contendo informações sobre a URL a ser analisada
+    domain = registered_domain.split(".")[0]
 
-        Retorna:
-            - ResultBase: Um objeto contendo o resultado da análise, incluindo o valor da detecção, uma versão normalizada do domínio e detalhes adicionais sobre a similaridade encontrada. 
+    if not _BY_LEN:
+        return ResultBase(value=0, normalized=None, details={"error": "wordlist não carregada"})
 
-        Exemplo:
-            structure = {
-                "url": "http://gооgle.com"
-            }
-            result = typosquatting(structure)
-            print(result.value)  # True
-            print(result.normalized)  # "google"
-            print(result.details)  # {"similarity_score": 0.86, "matched_domain": "google"}
-    """
-
-    url = structure.get("url", "")
-    if not url:
-        return ResultBase(
-            value = 0.0,
-            normalized = 0.0,
-            details = {
-                "similarity_score": 0.0,
-                "matched_domain": None
-            }
-        )
-
-    domain = extract_domain(url)
-    result = detect(domain, BY_LEN)
-
-    return ResultBase(
-        value = result.value,
-        normalized = result.normalized,
-        details = result.details
-    )   
+    return detect(domain, _BY_LEN)

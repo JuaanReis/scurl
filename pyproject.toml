@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scurl"
+version = "1.0.7"
+requires-python = ">=3.10"
+
+[project.scripts]
+scurl = "app.cli.main:main"
+scurl-api = "app.api.server:run"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "core*", "parsers*", "providers*", "datasets*", "utils*"]

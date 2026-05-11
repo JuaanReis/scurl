@@ -1,6 +1,7 @@
 from time import time
 from core.models.http_result import HTTPResult
-from __init__ import __version__
+from importlib.metadata import version
+__version__ = version("scurl")
 
 def _typeError_request(status_code: int) -> tuple[str, str]:
     error_type, message = "", ""

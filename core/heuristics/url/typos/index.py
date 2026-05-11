@@ -1,12 +1,10 @@
 from collections import defaultdict
 
-def build_index(domains: list):
-
+def build_index(domains: list) -> dict:
     by_len = defaultdict(list)
-    by_first = defaultdict(list)
 
     for d in domains:
-        by_len[len(d)].append(d)
-        by_first[d[0]].append(d)
+        if d:
+            by_len[len(d)].append(d)
 
-    return by_len, by_first
+    return by_len

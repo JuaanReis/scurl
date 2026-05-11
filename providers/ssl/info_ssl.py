@@ -1,6 +1,6 @@
 import ssl
 import socket
-from parsers.parse_issue_ssl import parse_issuer
+from core.parsers.parse_issue_ssl import parse_issuer
 
 def get_ssl_cert(structure: dict) -> dict:
     """

@@ -18,28 +18,25 @@ from .sections import (
     print_footer,
 )
 
-def print_output(data: dict, verbose: bool = False):
-    status = data.get("status")
+def print_output(scan: dict, target: dict, verbose: bool = False):
+    status = scan.get("status")
     if status == "error":
-        err: dict = data.get("error", {})
+        err: dict = scan.get("error", {})
         print(f"FALHA {err.get('type')}: {err.get('message')}")
         return
 
-    engine:      dict = data.get("engine", {})
-    meta:        dict = data.get("meta", {})
-    result:      dict = data.get("result", {})
-    stats:       dict = data.get("stats", {})
-    target:      dict = data.get("target", {})
-    network:     dict = data.get("network", {})
-    raw:         dict = data.get("raw", {})
-    heuristics:  list = data.get("heuristics", [])
-    insight:     list = data.get("insight", [])
+    engine:      dict = scan.get("engine", {})
+    meta:        dict = scan.get("meta", {})
+    result:      dict = scan.get("result", {})
+    stats:       dict = scan.get("stats", {})
+    heuristics:  list = scan.get("heuristics", [])
+    insight:     list = scan.get("insight", [])
+    network:     dict = target.get("network", {})
+    raw:         dict = target.get("raw", {})
     headers:     dict = raw.get("headers", {})
-
-    ssl_details: dict = _get_heuristic_details(data, "ssl_score")
-    dns_details: dict = _get_heuristic_details(data, "dns_score")
-
-    inferred = infer(data)
+    ssl_details: dict = _get_heuristic_details(scan, "ssl_score")
+    dns_details: dict = _get_heuristic_details(scan, "dns_score")
+    inferred = infer(scan, target)
 
     print_target(target, inferred)
     print_network(network, raw, inferred)

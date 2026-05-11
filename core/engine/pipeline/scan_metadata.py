@@ -11,6 +11,6 @@ def meta_attribute(ctx: ScanContext, processors: int = 1) -> dict:
             processors (int, optional): O número de threads usadas para a varredura. O padrão é 1.
     """
     
-    ctx.timestamp = datetime.now(UTC).isoformat()
-    ctx.scan_id = uuid4().hex
-    ctx.threads = processors
+    ctx.meta.timestamp = datetime.now(UTC)
+    ctx.meta.scan_id = uuid4().hex
+    ctx.meta.threads = processors

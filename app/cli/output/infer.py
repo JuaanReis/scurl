@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 
 
-def infer(data: dict) -> dict:
-    headers:     dict = data.get("raw", {}).get("headers", {})
-    target:      dict = data.get("target", {})
-    meta:        dict = data.get("meta", {})
-    dns_details: dict = _get_heuristic_details(data, "dns_verify")
+def infer(scan: dict, target: dict) -> dict:
+    raw:         dict = target.get("raw", {})
+    headers:     dict = raw.get("headers", {})
+    meta:        dict = scan.get("meta", {})
+    dns_details: dict = _get_heuristic_details(scan, "dns_verify")
 
     server_header = headers.get("server", "").upper()
     alt_svc       = headers.get("alt-svc", "")
@@ -55,8 +55,8 @@ def infer(data: dict) -> dict:
         "permissions":    permissions,
     }
 
-def _get_heuristic_details(data: dict, name: str) -> dict:
-    for h in data.get("heuristics", []):
+def _get_heuristic_details(scan: dict, name: str) -> dict:
+    for h in scan.get("heuristics", []):
         if h.get("name") == name:
             return h.get("details", {})
     return {}

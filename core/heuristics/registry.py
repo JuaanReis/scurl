@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Callable
+from dataclasses import dataclass, field
+from typing import Callable, Any
 
 @dataclass
 class RuleEntry:
@@ -8,11 +8,12 @@ class RuleEntry:
     category: str
     severity: str
     weight: float
-    tags: list[str]
+    tags: list[str] = field(default_factory=list)
+    extra: dict[str, Any] = field(default_factory=dict)
 
 _REGISTRY: list[RuleEntry] = []
 
-def register(name: str, category: str, severity: str, weight: float, tags: list[str] = []):
+def register(name: str, category: str, severity: str, weight: float, tags: list[str] = [], **kwargs):
     def decorator(fn: Callable) -> Callable:
         _REGISTRY.append(RuleEntry(
             fn=fn,
@@ -21,6 +22,7 @@ def register(name: str, category: str, severity: str, weight: float, tags: list[
             severity=severity,
             weight=weight,
             tags=tags,
+            extra=kwargs,
         ))
         return fn
     return decorator

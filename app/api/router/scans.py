@@ -25,4 +25,5 @@ async def get_scan_by_identifier(identifier: str):
     result = get_scan(identifier)
     if not result:
         return JSONResponse(status_code=404, content={"status": "error", "message": "Scan não encontrado"})
-    return result
+    scan, target = result
+    return AnalyzeResponse(scan=ScanResponse(**scan), target=TargetResponse(**target))

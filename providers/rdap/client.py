@@ -1,5 +1,6 @@
 from httpx import Client, Limits, Timeout
-from __init__ import __version__
+from importlib.metadata import version
+__version__ = version("scurl")
 
 def _base_limits() -> Limits:
     return Limits(max_keepalive_connections=20, max_connections=50)

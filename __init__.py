@@ -1,1 +1,5 @@
-__version__ = "1.0.5"
+try:
+    from importlib.metadata import version
+    __version__ = version("scurl")
+except Exception:
+    __version__ = "dev"

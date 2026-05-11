@@ -1,4 +1,4 @@
-from parsers.url_structure_extract import extract_structure
+from core.parsers.url_structure_extract import extract_structure
 
 def get_structure(url: str) -> dict:
     """

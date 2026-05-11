@@ -6,7 +6,9 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.api.router.analyze import router, limiter
 from app.api.router.scans import router as scans_router
 from providers.database.connection import init_db
-from __init__ import __version__
+from importlib.metadata import version
+import uvicorn
+__version__ = version("scurl")
 
 app = FastAPI(title="scurl", version=__version__, docs_url="/docs", redoc_url=None)
 
@@ -22,4 +24,9 @@ async def startup():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": __version__}
+    return {
+        "status": "ok", "version": __version__
+    }
+
+def run():
+    uvicorn.run("app.api.server:app", host="0.0.0.0", port=8000, reload=False)

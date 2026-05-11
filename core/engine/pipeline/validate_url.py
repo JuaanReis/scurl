@@ -1,5 +1,6 @@
 from core.models.scan_context import ScanContext
-from __init__ import __version__
+from importlib.metadata import version
+__version__ = version("scurl")
 
 def _url_validator(url: str) -> dict | None:
     if not url:
@@ -54,4 +55,4 @@ def validate_target(ctx: ScanContext) -> dict | None:
         - Se a URL não começar com "http://" ou "https://", retorna um erro do tipo "missing_protocol".
         - Se a URL for muito longa, retorna um erro do tipo "url_too_long".
     """
-    return _url_validator(ctx.url)
+    return _url_validator(ctx.target.url)

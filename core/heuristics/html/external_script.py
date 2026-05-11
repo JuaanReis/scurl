@@ -3,7 +3,7 @@ import socket
 from urllib.parse import urlparse
 from ipwhois import IPWhois
 from core.models.result_base import ResultBase
-from parsers.html_parser import HTMLParser
+from core.parsers.html_parser import HTMLParser
 from utils.normalize_domain import normalize_domain
 from ..registry import register
 

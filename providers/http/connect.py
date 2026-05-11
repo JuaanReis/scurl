@@ -57,3 +57,39 @@ def get_response(url: str, retries: int = 3, delay: float = 0.6, timeout: float 
                 backoff_delay(attempt, base_delay=delay)
 
     return None
+
+def post_response(url: str, data: dict | None = None, retries: int = 3, delay: float = 0.6, timeout: float = 5) -> HTTPResult | None:
+
+    for attempt in range(retries):
+
+        try:
+            response = scan_client.post(
+                url,
+                json=data,
+                timeout=timeout
+            )
+
+            return _build_result(response)
+
+        except HTTPStatusError as e:
+            response = e.response
+
+            if should_retry(response.status_code):
+                sleep(get_retry_after(dict(response.headers)))
+                continue
+
+            return _build_result(response)
+
+        except (ConnectError, RequestError) as e:
+            logger.warning(
+                "Tentativa %d/%d falhou para %s: %s",
+                attempt + 1,
+                retries,
+                url,
+                e
+            )
+
+            if attempt < retries - 1:
+                backoff_delay(attempt, base_delay=delay)
+
+    return None

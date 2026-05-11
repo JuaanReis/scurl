@@ -6,6 +6,8 @@ from core.heuristics.html import redirect_check
 from core.heuristics.server import rdap_field
 from core.heuristics.server.dns_verify import dns_verify
 from core.heuristics.server.ssl_verify import ssl_verify
-from core.heuristics.html import password_input
+from core.heuristics.html import password_input, clients_hint, inline_data_css, missing_form_tag, script_integrity_absent
 from core.heuristics.server import nameserver_diversity
 from core.heuristics.url import domain
+from core.heuristics.url.typos import typosquatting
+from core.heuristics.server import safe_browsing

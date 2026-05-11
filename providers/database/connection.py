@@ -1,7 +1,11 @@
 import sqlite3
 import os
+from pathlib import Path
 
-DB_PATH = os.getenv("SCURL_DB_PATH", "./datasets/scurl.db")
+BASE_DIR = Path(__file__).parent.parent.parent  # raiz do projeto
+
+DB_PATH = Path(os.getenv("SCURL_DB_PATH", BASE_DIR / "providers" / "database" / "storage" / "scurl.db"))
+SCHEMA_FILE = BASE_DIR / "providers" / "database" / "schema" / "scans.sql"
 
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
@@ -10,18 +14,7 @@ def get_connection() -> sqlite3.Connection:
 
 def init_db() -> None:
     with get_connection() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS scans (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                url_hash    TEXT NOT NULL UNIQUE,
-                url         TEXT NOT NULL,
-                score       REAL,
-                risk_level  TEXT,
-                verdict     TEXT,
-                scan_id     TEXT,
-                timestamp   TEXT,
-                payload     TEXT NOT NULL
-            )
-        """)
+        with open(SCHEMA_FILE, "r") as f:
+            conn.executescript(f.read())
         conn.execute("CREATE INDEX IF NOT EXISTS idx_url_hash ON scans(url_hash)")
         conn.commit()

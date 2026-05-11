@@ -7,7 +7,13 @@ logger = logging.getLogger(__name__)
 MAX_SCAN_SECONDS = 15
 
 def execute_rules(ctx: ScanContext, rules: list, processors: int) -> dict | None:
-    frozen = dict(ctx.structure)
+    frozen = dict(ctx.target.structure)
+    frozen["html_parser"] = ctx.target.html
+    frozen["headers"] = dict(ctx.target.response.headers) if ctx.target.response else {}
+    frozen["dns"] = ctx.target.dns
+    frozen["ssl"] = ctx.target.ssl
+    frozen["rdap"] = ctx.target.rdap
+    frozen["safe_browsing"] = ctx.target.safe_browsing
 
     with ThreadPoolExecutor(max_workers=min(processors, 8)) as executor:
         future_map = {executor.submit(rule.fn, frozen): rule for rule in rules}
