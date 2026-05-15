@@ -1,4 +1,4 @@
-<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 50px; object-fit: cover;">
+<img src="assets/scurl_logo.jpeg" alt="Banner">
 
 # **SCURL** — Structural & Contextual URL Risk Locator.
 
