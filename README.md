@@ -1,4 +1,4 @@
-<img src="assets/scurl_logo.jpeg" alt="Banner">
+<img src="assets/scurl_logo_no_background.png" alt="Banner">
 
 # **SCURL** — Structural & Contextual URL Risk Locator.
 
