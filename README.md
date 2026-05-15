@@ -1,4 +1,4 @@
-<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 200px; object-fit: cover;">
+<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 100px; object-fit: cover;">
 
 # **SCURL** é um scanner baseado em análise heurística e estatística capaz de estimar o risco de URLs potencialmente maliciosas.
 
