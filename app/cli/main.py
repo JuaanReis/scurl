@@ -43,3 +43,6 @@ def main():
             print(f"\nSaída salva em {args.output}")
     except KeyboardInterrupt:
         exit(0)
+
+if __name__ == "__main__":
+    main()

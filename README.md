@@ -1,8 +1,6 @@
-# SCURL — Structural & Contextual URL Risk Locator
+<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 200px; object-fit: cover;">
 
-> Motor heurístico de análise de risco para detecção de URLs maliciosas e suspeitas.
-
-SCURL é um scanner baseado em análise heurística e estatística capaz de estimar o risco de URLs potencialmente maliciosas.
+# **SCURL** é um scanner baseado em análise heurística e estatística capaz de estimar o risco de URLs potencialmente maliciosas.
 
 Ao invés de depender exclusivamente de listas de bloqueio, o SCURL analisa:
 
@@ -19,168 +17,29 @@ O motor heurístico permite detectar padrões suspeitos mesmo em URLs nunca vist
 
 ---
 
-![License](https://img.shields.io/badge/license-MIT-darkblue)
-![Language](https://img.shields.io/badge/language-Python-black)
-
----
-
 # Índice
 
+- [Estatísticas e diversos](#estatísticas-e-diversos)
+- [Features](#features)
 - [Instalação](#instalação)
 - [Uso](#uso)
   - [CLI](#cli)
   - [API](#api)
-- [Exemplo](#exemplo)
-- [Features](#features)
 - [Documentação](#documentação)
 - [Limitações](#limitações)
 - [Licença](#licença)
+- [Contribuições](#contribuições)
 
----
+# Estatísticas e diversos.
 
-# Instalação
-
-## Requisitos
-
-- Python 3.11+
-
----
-
-## Clone do projeto
-
-```bash
-git clone https://github.com/JuaanReis/scurl.git
-cd scurl
-```
-
----
-
-## Instalação
-
-```bash
-pip install -e .
-```
-
-Após a instalação:
-
-```bash
-scurl
-scurl-api
-```
-
-estarão disponíveis no ambiente.
-
----
-
-## Variáveis de ambiente
-
-Crie um arquivo `.env`:
-
-```env
-GOOGLE_SAFE_BROWSING_KEY=sua_chave
-SCURL_DB_PATH=./providers/database/storage/scurl.db
-```
-
-A heurística `safe_browsing` é automaticamente desativada caso nenhuma chave seja fornecida.
-
----
-
-# Uso
-
-## CLI
-
-```bash
-scurl -u "https://example.com"
-```
-
-### Exemplos
-
-```bash
-# análise simples
-scurl -u "https://example.com"
-
-# saída detalhada
-scurl -u "https://example.com" -v
-
-# salvar JSON
-scurl -u "https://example.com" -o result.json
-
-# reutilizar cache
-scurl -u "https://example.com" -c
-```
-
----
-
-## API
-
-Inicie o servidor:
-
-```bash
-scurl-api
-```
-
-Servidor:
-
-```text
-http://localhost:8000
-```
-
-Swagger:
-
-```text
-http://localhost:8000/docs
-```
-
----
-
-### Exemplo de request
-
-```bash
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"url":"http://www.exemp1o.com/results?user=i123"}'
-```
-
----
-
-# Exemplo
-
-```text
-SCURL :: heuristic web analyzer v1.0.7
-────────────────────────────────────────
-
-Target
-======
-URL ............. https://maxismyclp.help
-Host .................... maxismyclp.help
-Registered .............. maxismyclp.help
-
-Security Posture
-================
-HSTS ........................... DISABLED
-CSP ............................ DISABLED
-
-Engine
-======
-Rules Loaded ......................... 36
-Triggered ............................. 4
-
-Findings
-========
-[+] favicon externo + domínio novo
-[!] domínio novo + DNS suspeito
-
-Risk Score
-==========
-84.60 / 100.00
-[████████░░] VERY HIGH
-
-Assessment
-==========
-O alvo apresenta fortes indicadores de atividade maliciosa.
-```
-
----
+![License](https://img.shields.io/badge/license-MIT-darkblue)
+![Language](https://img.shields.io/badge/language-Python-black)
+[![Python Version](https://img.shields.io/badge/Python-3.11+-000000.svg)](https://www.python.org/)
+[![Stars](https://img.shields.io/github/stars/JuaanReis/scurl?style=social)](https://github.com/JuaanReis/scurl) &nbsp;
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/JuaanReis/scurl/pulls) &nbsp;
+[![Last Commit](https://img.shields.io/github/last-commit/JuaanReis/scurl)](https://github.com/JuaanReis/scurl/commits/main) &nbsp;
+[![Play Random Video](https://img.shields.io/badge/SCURL-TV1-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ) &nbsp;
+[![Play Random Video](https://img.shields.io/badge/SCURL-TV2-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=QwLvrnlfdNo)
 
 # Features
 
@@ -200,7 +59,61 @@ O alvo apresenta fortes indicadores de atividade maliciosa.
 - execução paralela
 - integração com Google Safe Browsing
 
----
+# Instalação
+
+Requer **Python 3.11+**.
+
+```bash
+git clone https://github.com/JuaanReis/scurl.git
+cd scurl
+pip install -e .
+```
+
+Após a instalação, `scurl` e `scurl-api` estarão disponíveis no ambiente.
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+GOOGLE_SAFE_BROWSING_KEY=sua_chave
+SCURL_DB_PATH=./providers/database/storage/scurl.db
+```
+
+A heurística `safe_browsing` é desativada automaticamente se nenhuma chave for fornecida.
+
+# Uso
+
+## *CLI*
+
+O ponto de entrada principal é `-u`, que recebe a URL alvo. As flags disponíveis são:
+
+| Flag | Descrição |
+|------|-----------|
+| `-u` | URL alvo (obrigatório) |
+| `-v` | Saída detalhada com breakdown por heurística |
+| `-o` | Exporta o resultado em JSON para o arquivo especificado |
+| `-c` | Reutiliza cache SQLite se a URL já foi analisada anteriormente |
+
+> *Abaixo é um exemplo de saída de uma run comum.*
+
+<img src="assets/carbon.png" alt="Demo" width="800">
+
+> *_Esse é um exemplo de saída detalhada. O score final é `10`, com contribuições de várias heurísticas. O breakdown mostra quais sinais foram observados e como eles impactaram o score._*
+
+## *API*
+
+Inicie o servidor com `scurl-api`. Por padrão sobe em `http://localhost:8000`, com documentação interativa disponível em `http://localhost:8000/docs` (Swagger UI).
+
+```bash
+scurl-api
+```
+
+### Exemplo de request
+
+```bash
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"url":"http://www.exemp1o.com/results?user=i123"}'
+```
 
 # Documentação
 
@@ -213,27 +126,28 @@ O alvo apresenta fortes indicadores de atividade maliciosa.
 | [`docs/CLI.md`](./docs/CLI.md) | flags e uso da CLI |
 | [`docs/API.md`](./docs/API.md) | endpoints REST |
 
----
 
 # Limitações
 
-O SCURL é um sistema heurístico.
+O SCURL é um sistema heurístico, não determinístico. Os scores refletem probabilidade de risco com base em sinais observáveis — não confirmação de malícia. Falsos positivos e falsos negativos são esperados, especialmente em domínios legítimos com infraestrutura atípica (ex: CDNs, provedores de DNS compartilhado).
 
-Ele:
+O motor opera exclusivamente sobre dados de rede e estrutura da URL. Ele não executa JavaScript, não renderiza páginas e não simula comportamento de browser. Ataques que dependem de conteúdo dinâmico ou client-side podem não ser detectados.
 
-- não garante detecção absoluta
-- não substitui análise humana
-- pode produzir falsos positivos
-- depende parcialmente de coleta externa
+Parte da análise depende de serviços externos (DNS, SSL, Google Safe Browsing), sujeitos a latência, indisponibilidade ou rate limiting.
 
-Atualmente o motor não executa:
+Mais detalhes em [`docs/calibration.md`](./docs/calibration.md).
 
-- JavaScript
-- browser sandbox
-- rendering client-side
+# Licença
+> O projeto é aberto sob a licença MIT, permitindo uso, modificação e distribuição livre. O código-fonte é disponibilizado sem garantias, e os autores não se responsabilizam por quaisquer danos decorrentes do uso do software. Para mais informações, consulte o arquivo de licença incluído no repositório. <br><br>
+> Não use o SCURL em sites ou domínios que você não possui ou tem permissão explícita para testar. O uso não autorizado pode ser ilegal e antiético. Sempre obtenha consentimento antes de analisar URLs que não são de sua propriedade.
 
-Mais detalhes em:
+MIT License. Veja [LICENSE](./LICENSE) para detalhes.
 
-- [`docs/calibration.md`](./docs/calibration.md)
+# Contribuições
+Sinta-se livre para contribuir com melhorias, correções de bugs ou novas heurísticas. Pull requests são bem-vindos.
+
+> Mais detalhes em [CONTRIBUTING](./CONTRIBUTING.md).
 
 ---
+
+Desenvolvido por [Juan](https://github.com/JuaanReis).

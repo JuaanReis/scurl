@@ -1,10 +1,12 @@
-from .classify_attacks import classify_attacks
+from .classify_attacks import classify_attacks, RULE_THRESHOLDS
+
 
 def insights(heuristics: list[dict], score: float) -> list[str]:
     values = {h["name"]: h["value"] for h in heuristics}
 
-    def active(rule: str, threshold: float = 0.5) -> bool:
-        return values.get(rule, 0) >= threshold
+    def active(rule: str, threshold: float | None = None) -> bool:
+        t = threshold if threshold is not None else RULE_THRESHOLDS.get(rule, 0.5)
+        return values.get(rule, 0) >= t
 
     attacks = classify_attacks(heuristics)
     attack_msgs = [a.description for a in attacks]
@@ -125,8 +127,8 @@ def insights(heuristics: list[dict], score: float) -> list[str]:
     MAX_TOTAL = 6
     pattern_slots = max(0, MAX_TOTAL - len(attack_msgs) - 1)
 
-    used_rules = set()
-    pattern_msgs = []
+    used_rules: set[str] = set()
+    pattern_msgs: list[str] = []
 
     for rules, message in patterns:
         if len(pattern_msgs) >= pattern_slots:

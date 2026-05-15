@@ -11,8 +11,8 @@ def calculate_score(ctx: ScanContext, k: int = 5) -> None:
             result.weight,
             ctx.results_map
         )
-
-        if adj_value is None or adj_value == 0.0:
+    
+        if adj_value is None or adj_value == 0:
             continue
 
         ctx.scores.append(adj_value)

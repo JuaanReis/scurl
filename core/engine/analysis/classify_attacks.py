@@ -12,7 +12,7 @@ ATTACK_PROFILES: dict[str, dict] = {
         "description": "Tentativa de phishing — infraestrutura descartável imitando serviço legítimo.",
         "required": [],
         "weighted_rules": {
-            "ssl_verify": (0.25, 0.3),  
+            "ssl_verify": (0.25, 0.3),
             "domain_age": (0.25, 0.5),
             "dns_verify": (0.15, 0.5),
             "rdap_field_incompleteness": (0.10, 0.5),
@@ -22,7 +22,7 @@ ATTACK_PROFILES: dict[str, dict] = {
             "password_input_check": (0.20, 0.5),
             "form_action_check": (0.15, 0.5),
         },
-        "threshold": 0.30, 
+        "threshold": 0.30,
     },
     "credential_harvesting": {
         "description": "Coleta de credenciais — formulário de login em infraestrutura suspeita.",
@@ -86,7 +86,7 @@ ATTACK_PROFILES: dict[str, dict] = {
         "required": [],
         "weighted_rules": {
             "ip_in_url": (0.40, 0.5),
-            "subdomain_count": (0.20, 0.4), 
+            "subdomain_count": (0.20, 0.4),
             "random_subdomain_risk": (0.20, 0.5),
             "rdap_field_incompleteness": (0.15, 0.5),
             "name_server_diversity": (0.15, 0.5),
@@ -95,16 +95,24 @@ ATTACK_PROFILES: dict[str, dict] = {
     },
     "url_masking": {
         "description": "Mascaramento de URL — destino real oculto via técnicas de manipulação de parser.",
-        "required": ["at_risk"], 
+        "required": ["at_risk"],
         "weighted_rules": {
             "at_risk": (0.50, 0.5),
             "mix_encoding": (0.20, 0.5),
             "query_contains_url": (0.20, 0.5),
             "subdomain_count": (0.10, 0.4),
         },
-        "threshold": 0.50, 
+        "threshold": 0.50,
     },
 }
+
+# Threshold mínimo de cada regra entre todos os profiles.
+# Usado por insights.py para manter consistência na checagem de ativação.
+RULE_THRESHOLDS: dict[str, float] = {}
+for _profile in ATTACK_PROFILES.values():
+    for _rule, (_, _rule_threshold) in _profile["weighted_rules"].items():
+        RULE_THRESHOLDS[_rule] = min(RULE_THRESHOLDS.get(_rule, 1.0), _rule_threshold)
+
 
 def classify_attacks(heuristics: list[dict]) -> list[AttackClassification]:
     values = {h["name"]: h["value"] for h in heuristics}
@@ -115,7 +123,6 @@ def classify_attacks(heuristics: list[dict]) -> list[AttackClassification]:
     results: list[AttackClassification] = []
 
     for attack_type, profile in ATTACK_PROFILES.items():
-        # required usa threshold padrão 0.5
         if not all(active(r, 0.5) for r in profile["required"]):
             continue
 

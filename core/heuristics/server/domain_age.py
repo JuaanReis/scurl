@@ -29,7 +29,7 @@ def domain_age(structure: dict) -> ResultBase:
 
     return ResultBase(
         value=age.days,
-        normalized=score if score > 0.1 else 0.0,
+        normalized=score,  
         details={
             "creation_date": creation.isoformat(),
             "age_days": max(0, age.days)

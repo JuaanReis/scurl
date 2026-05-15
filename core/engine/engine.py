@@ -34,3 +34,26 @@ def run_engine(url: str, k: int = 5, timeout: float = 5, processors: int = 2, re
     persist_scan(scan_result, target_data)
 
     return scan_result, target_data
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Run the engine with a target URL.")
+    parser.add_argument("--url", help="The target URL to scan.")  
+    parser.add_argument("--k", type=int, default=5, help="Number of top rules to return.")
+    parser.add_argument("--timeout", type=float, default=5, help="Timeout for data collection.")
+    parser.add_argument("--processors", type=int, default=2, help="Number of processors to use for parallel execution.")
+    parser.add_argument("--retries", type=int, default=3, help="Number of retries for data collection.")
+    parser.add_argument("--use-cache", action="store_true", help="Use cached results if available.")
+    args = parser.parse_args()
+
+    result, target_data = run_engine(
+        url=args.url,
+        k=args.k,
+        timeout=args.timeout,
+        processors=args.processors,
+        retries=args.retries,
+        use_cache=args.use_cache
+    )
+
+    print("Scan Result:")
+    print(result)

@@ -6,7 +6,7 @@ from core.models.result_base import ResultBase
 from core.parsers.html_parser import HTMLParser
 from core.parsers.normalize_domain import normalize_domain
 from ..registry import register
-
+import sys
 TRUSTED_DOMAINS = {normalize_domain(d) for d in {
     "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "ajax.googleapis.com",
     "code.jquery.com", "stackpath.bootstrapcdn.com", "unpkg.com",
