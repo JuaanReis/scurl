@@ -1,6 +1,8 @@
-<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 100px; object-fit: cover;">
+<img src="assets/scurl_logo.png" alt="Banner" style="width: 100%; max-height: 80px; object-fit: cover;">
 
-# **SCURL** é um scanner baseado em análise heurística e estatística capaz de estimar o risco de URLs potencialmente maliciosas.
+# **SCURL** — Structural & Contextual URL Risk Locator.
+
+*Um scanner heuristico e modular escrito em python*
 
 Ao invés de depender exclusivamente de listas de bloqueio, o SCURL analisa:
 
