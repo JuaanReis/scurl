@@ -7,7 +7,7 @@
 </h3>
 
 <p align="center">
- Detecte URLs suspeitas usando heurísticas estruturais, comportamentais e baseadas em infraestrutura — mesmo quando a URL nunca foi vista antes.
+ Detecte URLs suspeitas usando heurísticas estruturais, comportamentais e baseadas em infraestrutura
 </p>
 
 <p align="center">
