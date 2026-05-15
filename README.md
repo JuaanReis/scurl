@@ -22,7 +22,7 @@
 
 # Instalação
 
-Requer **Python 3.11+**.
+Requer **Python 3.10+**.
 
 ```bash
 git clone https://github.com/JuaanReis/scurl.git
@@ -81,7 +81,6 @@ curl -X POST http://localhost:8000/analyze \
 | [`docs/CLI.md`](./docs/CLI.md) | flags e uso da CLI |
 | [`docs/API.md`](./docs/API.md) | endpoints REST |
 
-
 # Licença
 
 MIT License. Veja [LICENSE](./LICENSE) para detalhes.
@@ -96,4 +95,4 @@ Sinta-se livre para contribuir com melhorias, correções de bugs ou novas heur�
 
 ---
 
-Desenvolvido por [Juan](https://github.com/JuaanReis).
+Desenvolvido por [Juan T. Reis](https://github.com/JuaanReis).

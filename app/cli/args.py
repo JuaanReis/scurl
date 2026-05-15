@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from app.cli.output.formatter import set_color
 
 def parse_args() -> Namespace | None:
     parse = ArgumentParser(description="scurl CLI version")
@@ -11,11 +12,15 @@ def parse_args() -> Namespace | None:
     parse.add_argument("-k", type=int, default=5)
     parse.add_argument("--retries", "-r", type=int, default=3)
     parse.add_argument("--cache", "-c", action="store_true")
+    parse.add_argument("--disable-color", "-dc", action="store_true")
 
     args = parse.parse_args()
 
     if args.url and args.target:
         parse.error("Use either positional URL or -u/--url, not both")
+
+    if args.disable_color:
+        set_color(False)
 
     args.url = args.url or args.target
 

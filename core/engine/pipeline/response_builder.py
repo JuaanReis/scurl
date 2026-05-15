@@ -51,7 +51,8 @@ def _build_identity(ctx: ScanContext) -> dict:
         "punycode": punycode,
         "unicode_domain": unicode_domain,
         "is_idn": is_idn,
-        "is_homograph": False,  # requer comparação unicode — não coletado ainda
+        "is_homograph": False,  
+        "is_https": structure.get("scheme", "").lower() == "https",
         "domain_length": structure.get("domain_length", 0),
         "domain_entropy": _domain_entropy(registered_domain),
         "url_length": structure.get("url_length", 0),
@@ -159,6 +160,7 @@ def _build_http(ctx: ScanContext) -> dict:
         "redirect_chain": response.redirect_chain or [],
         "content_type": content_type,
         "content_length": response.size,
+        "size_kb": round(response.size / 1024, 2) if response.size else 0,
         "encoding": encoding,
         "compression": {
             "enabled": encoding in compression_map,

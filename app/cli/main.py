@@ -1,16 +1,16 @@
-from core.engine.engine import run_engine
-from app.cli.output import print_output
-from app.cli.output.store_output import save_output
-from .args import parse_args
-from importlib.metadata import version
-from providers.database.connection import init_db
 from sys import exit
-__version__ = version("scurl")
+try:
+    from core.engine.engine import run_engine
+    from app.cli.output import print_output
+    from app.cli.output.store_output import save_output
+    from .args import parse_args
+    from importlib.metadata import version
+    from providers.database.connection import init_db
+except KeyboardInterrupt:
+    print("FALHA keyboard_interrupt: Execução interrompida pelo usuário")
+    exit(0)
 
-def shorten(text, n=56) -> str:
-    if not text:
-        return ""
-    return text if len(text) <= n else text[:n-3] + "..."
+__version__ = version("scurl")
 
 def main():
     try:
@@ -20,10 +20,7 @@ def main():
         if cache:
             from time import time
             start = time()
-        try:
             init_db()
-        except Exception:
-            cache = False
             
         url = args.url
 
@@ -41,8 +38,13 @@ def main():
         if args.output:
             save_output(args.output, scan, target)
             print(f"\nSaída salva em {args.output}")
+
     except KeyboardInterrupt:
         exit(0)
+
+    except Exception as e:
+        print(f"FALHA {str(e)}")
+        exit(1)
 
 if __name__ == "__main__":
     main()

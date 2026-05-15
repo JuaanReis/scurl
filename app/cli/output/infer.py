@@ -1,34 +1,29 @@
 from datetime import datetime, timezone
 
-
 def infer(scan: dict, target: dict) -> dict:
-    raw:         dict = target.get("raw", {})
-    headers:     dict = raw.get("headers", {})
-    meta:        dict = scan.get("meta", {})
-    dns_details: dict = _get_heuristic_details(scan, "dns_verify")
-
-    server_header = headers.get("server", "").upper()
-    alt_svc       = headers.get("alt-svc", "")
-    csp           = headers.get("content-security-policy", "")
-    encoding      = headers.get("content-encoding", "none")
-    hsts          = headers.get("strict-transport-security", "")
-    xss           = headers.get("x-xss-protection", "")
-    permissions   = headers.get("permissions-policy", "")
-
+    http:    dict = target.get("http", {})
+    meta:    dict = scan.get("meta", {})
+    dns:     dict = target.get("dns", {})
+    security_headers: dict = http.get("security_headers", {})
+    server_header = (http.get("server") or "").upper()
+    alt_svc       = http.get("alt_svc") or ""
+    encoding      = http.get("encoding") or "none"
+    load_balanced = len(dns.get("a", [])) > 1 or (dns.get("ttl") or 999) < 120
+    csp         = security_headers.get("content-security-policy", "")
+    hsts        = security_headers.get("strict-transport-security", "")
+    xss         = security_headers.get("x-xss-protection", "")
+    permissions = security_headers.get("permissions-policy", "")
     is_google    = any(k in server_header for k in ["ESF", "GSE", "GFE", "GOOGLE"])
     http3        = "h3=" in alt_svc
     cdn_likely   = is_google or "cloudflare" in server_header.lower()
     edge_detected = is_google or http3
     trusted_types = "require-trusted-types-for" in csp
     xss_enabled   = xss != "0" and xss != ""
-    load_balanced = dns_details.get("ip_count", 1) > 1 or dns_details.get("ttl", 999) < 120
-
     scan_id_full   = meta.get("scan_id", "?")
     scan_id_short  = (
         f"{scan_id_full[:8]}-{scan_id_full[8:14]}"
         if len(scan_id_full) >= 14 else scan_id_full
     )
-
     url_hash_full  = meta.get("url_hash", "?")
     url_hash_short = url_hash_full[:18] + "..." if len(url_hash_full) > 18 else url_hash_full
 

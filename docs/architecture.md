@@ -264,18 +264,16 @@ A arquitetura favorece:
 
 # Estrutura do projeto
 
-```text
+```bash
 app/
  ├─ api/
- ├─ cli/
- └─ core/
+ └─ cli/
 
 core/
- ├─ engine/
- ├─ heuristics/
- ├─ models/
- ├─ pipeline/
- ├─ scoring/
- ├─ utils/
+ ├─ core/
+ ├─ app/
+ ├─ assets/
+ ├─ datasets/
+ ├─ docs/
  └─ providers/
 ```
