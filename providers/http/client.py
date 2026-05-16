@@ -1,6 +1,7 @@
 from httpx import Client, Timeout, Limits
 from providers.http.headers import build_headers
 from importlib.metadata import version
+from scurl import config
 __version__ = version("scurl")
 
 def _base_limits() -> Limits:
@@ -8,9 +9,9 @@ def _base_limits() -> Limits:
 
 def make_scan_client(rotate_ua: bool = True) -> Client:
     return Client(
-        http2=False,
-        verify=False,
-        follow_redirects=True,
+        http2=config["scanner"]["http2"],
+        verify=config["scanner"]["verify_ssl"],
+        follow_redirects=config["scanner"]["follow_redirects"],
         timeout=Timeout(timeout=6.0, connect=1.5, read=3.0),
         limits=_base_limits(),
         headers=build_headers(rotate_ua=rotate_ua),

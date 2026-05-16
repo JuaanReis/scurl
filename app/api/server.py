@@ -1,17 +1,25 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from app.api.router.analyze import router, limiter
 from app.api.router.scans import router as scans_router
+from fastapi.middleware.cors import CORSMiddleware
 from providers.database.connection import init_db
 from importlib.metadata import version
 import uvicorn
+from scurl import config
 __version__ = version("scurl")
 
 app = FastAPI(title="scurl", version=__version__, docs_url="/docs", redoc_url=None)
 
+if config["server"]["cors"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
@@ -29,7 +37,13 @@ async def health():
     }
 
 def run():
-    uvicorn.run("app.api.server:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run(
+        "app.api.server:app",
+        host=config["server"]["host"],
+        port=config["server"]["port"],
+        workers=config["server"]["workers"],
+        reload=False
+    )
 
 if __name__ == "__main__":
     run()

@@ -1,0 +1,29 @@
+[server]
+host = "0.0.0.0"
+port = 8000
+cors = true
+workers = 3
+
+[scanner]
+timeout = 6.0
+threads = 2
+k = 5
+retries = 3
+follow_redirects = true
+verify_ssl = true
+http2 = false
+
+[cache]
+enabled = true
+ttl = 3600
+
+[rate_limit]
+enabled = true
+requests_per_minute = 10
+
+[output]
+colors = true
+
+[security]
+allow_private_ips = false
+allow_localhost = false

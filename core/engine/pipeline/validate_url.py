@@ -1,6 +1,38 @@
 from core.models.scan_context import ScanContext
+import ipaddress
+import socket
+from urllib.parse import urlparse
+from scurl import config
 from importlib.metadata import version
 __version__ = version("scurl")
+
+def _is_private_or_local(url: str) -> str | None:
+    try:
+        host = urlparse(url).hostname
+        if not host:
+            return None
+
+        if host in ("localhost", "127.0.0.1", "::1") or host.endswith(".local"):
+            if not config["security"]["allow_localhost"]:
+                return "localhost"
+
+        try:
+            ip = ipaddress.ip_address(host)
+            if ip.is_private and not config["security"]["allow_private_ips"]:
+                return "private_ip"
+        except ValueError:
+            try:
+                resolved = socket.gethostbyname(host)
+                ip = ipaddress.ip_address(resolved)
+                if ip.is_private and not config["security"]["allow_private_ips"]:
+                    return "private_ip"
+            except socket.gaierror:
+                pass
+
+    except Exception:
+        pass
+
+    return None
 
 def _url_validator(url: str) -> dict | None:
     if not url:
@@ -29,6 +61,21 @@ def _url_validator(url: str) -> dict | None:
                 "type": "missing_protocol",
                 "message": "URL inválida"
             }
+        }
+
+    block = _is_private_or_local(url)
+    if block == "localhost":
+        return {
+            "status": "error",
+            "meta": {"url": url, "scan_time_s": 0, "version": __version__},
+            "error": {"type": "localhost_blocked", "message": "Acesso a localhost não permitido"}
+        }
+    
+    elif block == "private_ip":
+        return {
+            "status": "error",
+            "meta": {"url": url, "scan_time_s": 0, "version": __version__},
+            "error": {"type": "private_ip_blocked", "message": "Acesso a IPs privados não permitido"}
         }
     
     elif len(url) > 2048:

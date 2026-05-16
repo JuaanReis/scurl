@@ -17,7 +17,8 @@ dependencies = [
     "slowapi==0.1.9",
     "tldextract==5.3.1",
     "uvicorn==0.47.0",
-    "colorama>=0.4.6"
+    "colorama>=0.4.6",
+    "tomli>=2.0.1; python_version < '3.11'"
 ]
 
 [project.scripts]
@@ -26,4 +27,4 @@ scurl-api = "app.api.server:run"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*", "core*", "parsers*", "providers*", "datasets*", "utils*"]
+include = ["app*", "core*", "parsers*", "providers*", "datasets*", "utils*", "scurl*"]

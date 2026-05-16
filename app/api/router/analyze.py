@@ -12,7 +12,11 @@ from ..schema.map_result import (
 )
 from ..schema.map_error import ErrorResponse
 from core.engine.engine import run_engine
+from scurl import config
 
+_rate_enabled = config["rate_limit"]["enabled"]
+_rpm = config["rate_limit"]["requests_per_minute"]
+_limit_string = f"{_rpm}/minute" if _rate_enabled else "99999/minute"
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
@@ -29,9 +33,9 @@ _semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCANS)
         503: {"description": "Servidor ocupado"},
     }
 )
-@limiter.limit("10/minute")
+@limiter.limit(_limit_string)
 async def analyze_url(request: Request, body: AnalyzeRequest):
-    if _semaphore.locked() and _semaphore._value == 0:
+    if _semaphore.locked():
         return JSONResponse(
                     status_code=503, 
                     content={
@@ -42,7 +46,14 @@ async def analyze_url(request: Request, body: AnalyzeRequest):
     async with _semaphore:
         loop = asyncio.get_running_loop()
         scan, target = await loop.run_in_executor(
-            None, partial(run_engine, str(body.url), use_cache=body.use_cache)
+            None, partial(
+                run_engine, str(body.url), 
+                    use_cache=body.use_cache, 
+                    timeout=config["scanner"]["timeout"], 
+                    processors=config["scanner"]["threads"], 
+                    k=config["scanner"]["k"], 
+                    retries=config["scanner"]["retries"]
+                )
         )
 
     if scan.get("status") == "error":
