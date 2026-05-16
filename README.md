@@ -5,7 +5,7 @@
 ---
 
 <h3 align="center">
-  Heuristic URL Risk Analysis Engine
+  Structural and contextual URL risk locator
 </h3>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 # Instalação
 
-Requer **Python 3.10+**.
+Requer **Python 3.11+**.
 
 ```bash
 git clone https://github.com/JuaanReis/scurl.git
