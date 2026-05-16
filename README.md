@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="assets/scurl_logo_no_background.png" width="900">
+  <img src="assets/scurl_logo_no_background.png" width="100%" alt="SCURL Logo">
 </p>
+
+---
 
 <h3 align="center">
   Heuristic URL Risk Analysis Engine
