@@ -1,5 +1,20 @@
 from core.scoring.dependencies import DEPENDENCIES
 
+def _eval_condition(condition: dict, value) -> bool:
+    op = condition["op"]
+    if op == "is_none":
+        return value is None
+    if value is None:
+        return False
+    val = condition["val"]
+    return {
+        "<":  value < val,
+        "<=": value <= val,
+        ">":  value > val,
+        ">=": value >= val,
+        "==": value == val,
+    }[op]
+
 def apply_dependencies(
     name: str,
     value: float | None,
@@ -20,7 +35,7 @@ def apply_dependencies(
         source_value = results_map.get(dep["depends_on"])
 
         try:
-            triggered = dep["condition"](source_value)
+            triggered = _eval_condition(dep["condition"], source_value)
         except Exception:
             continue
 

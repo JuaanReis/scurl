@@ -1,6 +1,6 @@
 from pathlib import Path
 from core.models.result_base import ResultBase
-from datasets.wordlists.wordlist_generator import domain_generator as load_domains
+from datasets.wordlists.wordlist_loader import domain_generator as load_domains
 from core.heuristics.url.typos.index import build_index
 from core.heuristics.url.typos.detect import detect
 from ...registry import register
@@ -25,6 +25,12 @@ def typosquatting(structure: dict) -> ResultBase:
     domain = registered_domain.split(".")[0]
 
     if not _BY_LEN:
-        return ResultBase(value=0, normalized=None, details={"error": "wordlist não carregada"})
+        return ResultBase(
+            value=0, 
+            normalized=None, 
+            details={
+                "error": "wordlist não carregada"
+            }
+        )
 
     return detect(domain, _BY_LEN)

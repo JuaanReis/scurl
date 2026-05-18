@@ -45,8 +45,6 @@ class ScanResponse(BaseModel):
     heuristics: list[Heuristic]
     insight: list[str]
 
-# --- Target ---
-
 class Identity(BaseModel):
     original_url: str
     final_url: str | None

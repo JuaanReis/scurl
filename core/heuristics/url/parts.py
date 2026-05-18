@@ -1,4 +1,4 @@
-from datasets.keywords.suspects_keywords import shorten
+from datasets.keywords.shortener import shorten
 from urllib.parse import parse_qs, unquote
 from core.math.jaccard_similarity import similarity_jaccard
 from core.math.shannon_entropy import shannon_entropy

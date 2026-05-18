@@ -114,7 +114,6 @@ def extract_structure(url: str):
     path = parsed.path
     query = parsed.query
 
-    # parse_qs ignora params sem valor por padrão — keep_blank_values captura tudo
     query_params = parse_qs(query, keep_blank_values=True)
     query_param_count = len(query_params)
 

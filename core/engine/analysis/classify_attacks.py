@@ -106,8 +106,6 @@ ATTACK_PROFILES: dict[str, dict] = {
     },
 }
 
-# Threshold mínimo de cada regra entre todos os profiles.
-# Usado por insights.py para manter consistência na checagem de ativação.
 RULE_THRESHOLDS: dict[str, float] = {}
 for _profile in ATTACK_PROFILES.values():
     for _rule, (_, _rule_threshold) in _profile["weighted_rules"].items():

@@ -89,7 +89,7 @@ def dns_a(ips: list, ttl: int = None) -> SubScore:
         base_normalized = min(log(count - 1) / log(9), 1.0)
         context = "ip_count_high"
 
-    # Cruzamento: muitos IPs com TTL baixo = rotação ativa, amplifica risco
+
     if base_normalized is not None and ttl is not None and ttl < 120:
         normalized = min(base_normalized * 1.3, 1.0)
         context = "ip_rotation_suspected"

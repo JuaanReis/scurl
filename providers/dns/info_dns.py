@@ -1,5 +1,4 @@
 import dns.resolver
-import dns.rdatatype
 
 def _resolve(hostname: str, record_type: str) -> tuple[list, int | None]:
     try:

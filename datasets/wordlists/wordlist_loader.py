@@ -26,5 +26,5 @@ def domain_generator(path: str) -> Generator[str, Any, None]:
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
                 yield line.strip()
-    except (IOError, FileNotFoundError) as e:
-        return
+    except FileNotFoundError as e:
+        return 

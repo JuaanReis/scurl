@@ -1,3 +1,15 @@
+"""
+Módulo de agregação de componentes de análise.
+
+Este arquivo centraliza a importação de diferentes módulos responsáveis pela avaliação estrutural e comportamental de URLs e recursos associados. Ele atua como ponto de composição do sistema de análise, reunindo verificações aplicadas em múltiplas camadas, incluindo estrutura de URL, comportamento do conteúdo, propriedades do domínio e características do servidor.
+
+A arquitetura do sistema é modular, permitindo que cada componente seja mantido e evoluído de forma independente, ao mesmo tempo em que contribui para uma análise unificada. Essa abordagem facilita escalabilidade, testes isolados e a adição de novos mecanismos de avaliação sem impacto direto no fluxo principal.
+
+Os módulos importados são utilizados durante o processo de inspeção para compor um perfil geral de risco, combinando diferentes sinais coletados ao longo da análise. O objetivo é fornecer uma visão consolidada e consistente do comportamento observado, permitindo classificações mais precisas e adaptáveis a diferentes cenários de ameaça.
+
+Este arquivo não executa lógica de análise diretamente, funcionando apenas como ponto de integração entre os componentes do sistema.
+"""
+
 from core.heuristics.html import external_script, favicon_check, form_action, hidden_fields, image_check
 from core.heuristics.server import domain_age
 from core.heuristics.url import character
