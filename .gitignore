@@ -9,3 +9,5 @@ __pycache__/
 *.db
 *.egg-info/
 frontend/
+.vercel
+vercel.json

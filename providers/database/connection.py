@@ -3,13 +3,14 @@ import os
 from pathlib import Path
 import threading
 
+DB_PATH = Path(os.getenv("SCURL_DB_PATH", Path.home() / ".scurl" / "scurl.db"))
 BASE_DIR = Path(__file__).parent.parent.parent
-DB_PATH = Path(os.getenv("SCURL_DB_PATH", BASE_DIR / "providers" / "database" / "storage" / "scurl.db"))
 SCHEMA_FILE = BASE_DIR / "providers" / "database" / "schema" / "scans.sql"
 _local = threading.local()
 
 def get_connection() -> sqlite3.Connection:
     if not hasattr(_local, "conn"):
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode=WAL")

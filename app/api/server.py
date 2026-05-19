@@ -12,7 +12,7 @@ import uvicorn
 from scurl import config
 __version__ = version("scurl")
 
-app = FastAPI(title="scurl", version=__version__, docs_url="/docs", redoc_url=None)
+app = FastAPI(title="scurl", version=__version__, docs_url=None, redoc_url=None)
 
 if config["server"]["cors"]:
     app.add_middleware(
@@ -33,7 +33,10 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
 
 @app.on_event("startup")
 async def startup():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f"[WARN] DB init failed: {e}. Persistence disabled.")
 
 @app.get("/health")
 async def health():
