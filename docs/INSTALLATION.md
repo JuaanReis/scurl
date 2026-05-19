@@ -1,195 +1,110 @@
 # Instalação
 
+O scurl usa **setuptools** como build backend e **uv** como gerenciador de pacotes recomendado. O projeto requer Python 3.11 ou superior.
+
+---
+
 ## Requisitos
 
-Antes de instalar o projeto, certifique-se de que os seguintes requisitos estão instalados no sistema:
+- Python >= 3.11
+- [uv](https://docs.astral.sh/uv/) (recomendado) ou pip
+- Git
 
-* **Python 3.11 ou superior**
-* **Git**
-* **pip** (gerenciador de pacotes do Python)
+---
 
-Para verificar a versão do Python instalada, execute:
+## Instalação via uv (recomendado)
 
-```bash
-python --version
+### Windows
+
+```powershell
+# Instalar uv
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Clonar e instalar
+git clone https://github.com/JuaanReis/scurl.git
+cd scurl
+uv sync
 ```
 
-ou
+### Linux / macOS
 
 ```bash
-python3 --version
+# Instalar uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clonar e instalar
+git clone https://github.com/JuaanReis/scurl.git
+cd scurl
+uv sync
 ```
 
 ---
 
-# Windows
-
-## 1. Instalar o Python
-
-Baixe o Python no site oficial: *https://www.python.org/downloads/*
-
-Durante a instalação, **marque a opção**:
-
-```
-Add Python to PATH
-```
-
-Após a instalação, verifique se o Python foi instalado corretamente:
-
-```bash
-python --version
-```
-
----
-
-## 2. Clonar o repositório
+## Instalação via pip
 
 ```bash
 git clone https://github.com/JuaanReis/scurl.git
 cd scurl
+pip install -e .
 ```
+
+No Linux/macOS, se `pip` não estiver disponível ou for o pip do sistema, use `pip3` ou `python3 -m pip`.
 
 ---
 
-## 3. Instalar as dependências
+## Verificando a instalação
+
+Após instalar, os dois entry points ficam disponíveis:
 
 ```bash
-pip install -r requirements.txt
+scurl --help
+scurl-api
 ```
 
 ---
 
-## 4. Iniciar o servidor
+## Uso
+
+### CLI
 
 ```bash
-uvicorn app.main:app --reload
+scurl https://example.com
 ```
 
----
+Veja [CLI Reference](cli.md) para todos os argumentos e flags.
 
-# Linux
-
-## Debian / Ubuntu
-
-### 1. Instalar dependências do sistema
+### API
 
 ```bash
-sudo apt update
-sudo apt install python3 python3-pip git -y
+scurl-api
 ```
 
----
+Isso inicia o servidor uvicorn com as configurações definidas em `config["server"]`. Por padrão, o servidor sobe em `http://localhost:8000`.
 
-### 2. Clonar o repositório
+Para subir o servidor manualmente com controle de reload (desenvolvimento):
 
 ```bash
-git clone https://github.com/JuaanReis/scurl.git
-cd scurl
+uvicorn app.api.server:app --reload
 ```
+
+Veja [API Reference](api.md) para os endpoints disponíveis.
 
 ---
 
-### 3. Instalar dependências do projeto
+## Dependências
 
-```bash
-pip3 install -r requirements.txt
-```
+As dependências são declaradas no `pyproject.toml` e instaladas automaticamente pelo `uv sync` ou `pip install -e .`:
 
----
-
-### 4. Iniciar o servidor
-
-```bash
-uvicorn app.main:app --reload
-```
-
----
-
-## Arch Linux
-
-### 1. Instalar dependências do sistema
-
-```bash
-sudo pacman -S python python-pip git
-```
-
----
-
-### 2. Clonar o repositório
-
-```bash
-git clone https://github.com/JuaanReis/scurl.git
-cd scurl
-```
-
----
-
-### 3. Instalar dependências do projeto
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-### 4. Iniciar o servidor
-
-```bash
-uvicorn app.main:app --reload
-```
-
----
-
-# macOS
-
-## 1. Instalar dependências do sistema
-
-Utilizando **Homebrew**:
-
-```bash
-brew install python git
-```
-
-Se o Homebrew não estiver instalado, consulte: *https://brew.sh/*
-
----
-
-## 2. Clonar o repositório
-
-```bash
-git clone https://github.com/JuaanReis/scurl.git
-cd scurl
-```
-
----
-
-## 3. Instalar dependências do projeto
-
-```bash
-pip3 install -r requirements.txt
-```
-
----
-
-## 4. Iniciar o servidor
-
-```bash
-uvicorn app.main:app --reload
-```
-
----
-
-# Acessando a aplicação
-
-Após iniciar o servidor, abra o navegador e acesse:
-
-```
-http://localhost:8000
-```
-
----
-
-# Observações para desenvolvimento
-
-A flag `--reload` ativa o **auto-reload**, fazendo com que o servidor reinicie automaticamente sempre que houver alterações no código.
-Esse modo é recomendado apenas para ambiente de desenvolvimento.
+| Pacote | Versão |
+|---|---|
+| fastapi | 0.136.1 |
+| uvicorn | 0.47.0 |
+| pydantic | 2.13.4 |
+| httpx | 0.28.1 |
+| selectolax | 0.4.7 |
+| cryptography | 48.0.0 |
+| slowapi | 0.1.9 |
+| tldextract | 5.3.1 |
+| ipwhois | 1.3.0 |
+| colorama | >= 0.4.6 |
+| tomli | >= 2.0.1 (Python < 3.11 apenas) |
