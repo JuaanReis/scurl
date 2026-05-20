@@ -1,279 +1,217 @@
-# Arquitetura do SCURL
+# Arquitetura do scurl
 
-O SCURL foi projetado como um motor heurístico modular dividido em múltiplas camadas independentes. A arquitetura separa claramente:
-
-- coleta de dados
-- execução de heurísticas
-- resolução contextual
-- cálculo estatístico
-- formatação de resposta
-
-Essa separação permite reutilização do pipeline tanto na CLI quanto na API REST.
+O scurl é um motor heurístico modular para detecção de URLs maliciosas. A arquitetura separa coleta de dados, execução de heurísticas, resolução contextual, cálculo de score e formatação de resposta em estágios independentes. Esse design permite que o mesmo pipeline seja reutilizado tanto pela CLI quanto pela API REST sem duplicação de lógica.
 
 ---
 
-# Visão geral
+## Estrutura de diretórios
 
-```text
-Client Request
+```
+scurl/
+├── app/
+│   ├── api/               # FastAPI — endpoints, schemas, routers
+│   └── cli/               # CLI — args, output, formatação
+├── core/
+│   ├── engine/            # Pipeline principal e análise
+│   │   ├── pipeline/      # Estágios: validate, collect, execute, score...
+│   │   └── analysis/      # Classification, insights, attack detection
+│   ├── heuristics/        # Regras organizadas por categoria
+│   │   ├── url/
+│   │   ├── html/
+│   │   └── server/
+│   ├── math/              # Funções matemáticas (sigmoid, entropy, levenshtein...)
+│   ├── models/            # Dataclasses: ResultBase, ScanRule, ScanContext...
+│   ├── parsers/           # HTML parser, URL structure, domain normalization
+│   └── scoring/           # Weighted average, sigmoid, dependencies
+├── providers/
+│   ├── database/          # SQLite: connection, repository, schema
+│   ├── dns/               # Resolução DNS
+│   ├── http/              # Requisições HTTP
+│   ├── rdap/              # Consulta RDAP
+│   ├── safebrowsing/      # Google Safe Browsing API
+│   └── ssl/               # Inspeção de certificados TLS
+├── datasets/              # Wordlists, keywords, shorteners
+├── assets/                # Recursos estáticos
+├── docs/                  # Documentação
+├── scurl/                 # Configuração do projeto (config.toml loader)
+├── pyproject.toml
+└── config.toml
+```
+
+---
+
+## Entrypoints
+
+O `pyproject.toml` define dois scripts:
+
+```
+scurl      →  app.cli.main:main
+scurl-api  →  app.api.server:run
+```
+
+Ambos executam o mesmo pipeline de análise — a diferença é apenas a camada de apresentação.
+
+---
+
+## Pipeline de análise
+
+O fluxo principal vive em `core/engine/pipeline/` e é orquestrado por `core/engine/engine.py`. Os estágios são executados em sequência, passando um objeto `ScanContext` entre si.
+
+```
+run_engine(url)
       │
       ▼
-Entrypoint (CLI ou API)
+validate_url        → valida schema, normaliza host, extrai estrutura
       │
       ▼
-Pipeline
- ├─ validate_url
- ├─ collect
- ├─ execute
- ├─ context_apply
- ├─ score
- └─ response_builder
+collect             → coleta dados externos (HTTP, DNS, SSL, RDAP, Safe Browsing)
       │
       ▼
-Database (SQLite)
+execute             → executa todas as heurísticas em paralelo (ThreadPoolExecutor)
       │
       ▼
-Output
+context_apply       → aplica dependências entre heurísticas (reduce / increase / skip)
+      │
+      ▼
+score               → calcula score final (média ponderada + sigmoid)
+      │
+      ▼
+response_builder    → monta ScanResult e TargetData para retorno
 ```
 
+### validate_url
+
+Valida o schema (`http`/`https`), normaliza o hostname, extrai subdomínios, TLD, path, query e fragment via `tldextract` e `urlparse`. Retorna um `ScanContext` populado com a estrutura da URL.
+
+### collect
+
+Faz todas as requisições externas **uma única vez** e injeta os dados no `ScanContext`. Inclui:
+
+- Requisição HTTP completa (headers, redirect chain, body, timing)
+- Resolução DNS (A, AAAA, MX, NS, TXT, SPF, DKIM, TTL)
+- Inspeção de certificado TLS via `providers/ssl`
+- Consulta RDAP via `providers/rdap`
+- Consulta Google Safe Browsing via `providers/safebrowsing`
+- Parsing do HTML via `selectolax` (centralizado — cada heurística lê a árvore já parseada)
+
+A centralização da coleta evita que múltiplas heurísticas façam requisições redundantes ao mesmo alvo.
+
+### execute
+
+Executa todas as heurísticas registradas via `@register` em paralelo usando `ThreadPoolExecutor`. Cada heurística recebe o `ScanContext` como entrada e retorna um `ResultBase`. Heurísticas que retornam `normalized = None` são marcadas como não aplicáveis e excluídas do cálculo de score.
+
+### context_apply
+
+Segunda passagem sobre os resultados. Aplica o sistema de dependências definido em `core/scoring/dependencies.py`: para cada regra, verifica se outras regras disparam condições de `reduce`, `increase` ou `skip`. Quando `reduce` e `increase` conflitam na mesma regra, `reduce` vence. O resultado é um conjunto de scores ajustados ao contexto do alvo específico.
+
+### score
+
+Calcula o score final em dois passos:
+
+1. **Média ponderada** dos `normalized` ajustados, usando os `weight` de cada heurística
+2. **Transformação sigmoid** (k=5) que mapeia o resultado para `[0, 100]`
+
+### response_builder
+
+Monta dois objetos separados:
+
+- **ScanResult** — score, risk_level, verdict, heurísticas triggeradas, insights, stats, metadados do scan
+- **TargetData** — estrutura completa do alvo: identity, network, TLS, DNS, HTTP, content, domain
+
 ---
 
-# Entrypoints
+## Camada de providers
 
-O projeto possui dois pontos de entrada independentes:
+Os providers em `providers/` são responsáveis exclusivamente por I/O externo. Nenhuma lógica de scoring ou heurística vive aqui.
 
-```bash
-scurl
-scurl-api
+| Provider | Responsabilidade |
+|---|---|
+| `http` | Requisição HTTP, redirect chain, headers, body, timing |
+| `dns` | Resolução DNS usando `dnspython` |
+| `ssl` | Conexão TLS, extração de certificado, SANs, fingerprints |
+| `rdap` | Consulta RDAP para dados de registro do domínio |
+| `safebrowsing` | Consulta à Google Safe Browsing API v4 |
+| `database` | SQLite: inicialização, connection pool, repository (list/get/save scans) |
+
+---
+
+## Camada de heurísticas
+
+As heurísticas em `core/heuristics/` são funções puras registradas via decorator `@register`. Cada uma:
+
+- recebe `structure: dict` (o `ScanContext` serializado)
+- retorna `ResultBase(value, normalized, details)`
+- não faz I/O externo
+- não conhece outras heurísticas
+
+A separação em categorias (`url/`, `html/`, `server/`) é organizacional — o pipeline não trata categorias diferentemente durante a execução.
+
+---
+
+## Camada matemática
+
+`core/math/` contém funções utilitárias sem dependência de estado:
+
+| Módulo | Função |
+|---|---|
+| `shannon_entropy` | Entropia de Shannon para detecção de strings aleatórias |
+| `levenshtein` | Distância de edição para typosquatting |
+| `jaccard_similarity` | Similaridade de conjuntos para comparação de domínios |
+| `exponential_decay` | Curva de decaimento para domain age scoring |
+| `value_normalizator` | `minmax`, `normalize_counter` — normalização de valores brutos |
+| `sigmoid` | Transformação sigmoid ponderada usada no score final |
+| `n_gram` | N-gramas para análise textual |
+| `sequence_matcher` | Wrapper de SequenceMatcher para similaridade de strings |
+
+---
+
+## Modelos de dados
+
+`core/models/` define os dataclasses que trafegam pelo pipeline:
+
+| Modelo | Descrição |
+|---|---|
+| `ScanContext` | Objeto central — carrega todos os dados coletados e a estrutura da URL |
+| `ResultBase` | Retorno de cada heurística: `value`, `normalized`, `details` |
+| `ScanRule` | Metadados de uma regra: `name`, `category`, `severity` |
+| `ScanResult` | Resultado final do scan para retorno ao cliente |
+| `SubScore` | Sub-resultado interno das heurísticas compostas (dns_score, ssl_score) |
+| `HttpResult` | Dados brutos da resposta HTTP |
+
+---
+
+## Sistema de cache
+
+Ativado com `--cache` na CLI ou `use_cache: true` na API.
+
+- Chave: `SHA-256(url_normalizada)`
+- Storage: SQLite em `~/.scurl/scurl.db` (ou path via `SCURL_DB_PATH`)
+- Hit: retorna resultado armazenado sem executar o pipeline
+- Miss: executa o pipeline completo e persiste o resultado
+
+No Vercel, o path deve ser configurado para `/tmp/scurl.db` via variável de ambiente — o filesystem é read-only fora de `/tmp` e os dados não persistem entre cold starts.
+
+---
+
+## Modelo de concorrência
+
+| Componente | Modelo |
+|---|---|
+| Coleta de dados (`collect`) | Síncrono sequencial (cada provider faz I/O uma vez) |
+| Execução de heurísticas (`execute`) | Paralelo via `ThreadPoolExecutor` |
+| API REST | Assíncrono via FastAPI/uvicorn com semáforo de 20 scans simultâneos |
+| CLI | Síncrono — o `run_engine` é chamado diretamente |
+
+---
+
+## Fluxo de dados resumido
+
 ```
-
-## CLI
-
-Localizada em:
-
-```text
-app/cli/
-```
-
-Responsável por:
-
-- parsing de argumentos
-- renderização terminal
-- exportação JSON
-- gerenciamento de cache
-- execução local
-
----
-
-## API REST
-
-Localizada em:
-
-```text
-app/api/
-```
-
-Baseada em:
-
-- FastAPI
-- Uvicorn
-- Pydantic
-
-Responsável por:
-
-- endpoints REST
-- serialização
-- validação
-- rate limiting
-- documentação OpenAPI
-
----
-
-# Pipeline de análise
-
-## 1. validate_url
-
-Validação e normalização da URL.
-
-Etapas:
-
-- validação de schema
-- normalização de host
-- remoção de caracteres inválidos
-- parsing estrutural
-- separação de query/fragment/path
-
-Saída:
-
-```text
-ScanContext
-```
-
----
-
-## 2. collect
-
-Responsável pela coleta de dados externos.
-
-Inclui:
-
-- requisição HTTP
-- DNS lookup
-- SSL inspection
-- RDAP
-- Safe Browsing
-- redirects
-- headers
-- HTML bruto
-
-A coleta é desacoplada das heurísticas para evitar múltiplas requisições redundantes.
-
----
-
-## 3. execute
-
-Execução paralela das heurísticas.
-
-Implementado via:
-
-```python
-ThreadPoolExecutor
-```
-
-Cada heurística recebe um contexto imutável contendo:
-
-- URL estruturada
-- resposta HTTP
-- metadados DNS
-- SSL
-- HTML parseado
-
-Todas as heurísticas executam isoladamente.
-
----
-
-## 4. context_apply
-
-Segunda passagem responsável por aplicar dependências heurísticas.
-
-Permite:
-
-- reduzir scores
-- amplificar sinais
-- invalidar heurísticas
-
-Esse estágio evita:
-
-- double counting
-- inflação artificial
-- falsos positivos sistemáticos
-
----
-
-## 5. score
-
-Combinação estatística dos resultados heurísticos.
-
-Processo:
-
-1. média ponderada
-2. transformação sigmoide
-3. normalização 0–100
-4. classificação textual
-
-Saída:
-
-```text
-low
-medium
-high
-critical
-```
-
----
-
-## 6. response_builder
-
-Separação da resposta em:
-
-```text
-ScanResult
-TargetData
-```
-
-### ScanResult
-
-Contém:
-
-- score
-- heurísticas
-- insights
-- estatísticas
-- metadados
-
-### TargetData
-
-Contém:
-
-- URL estruturada
-- headers
-- redirects
-- payload
-- DNS
-- SSL
-- rede
-
----
-
-# Sistema de cache
-
-O SCURL utiliza SQLite para persistência local.
-
-A chave de cache é:
-
-```text
-SHA-256(url_normalizada)
-```
-
-Objetivos:
-
-- evitar reprocessamento
-- acelerar análises repetidas
-- permitir histórico local
-
----
-
-# Modelo de execução
-
-O pipeline é híbrido:
-
-| Tipo | Modelo |
-|------|--------|
-| I/O bound | paralelo |
-| CPU bound | síncrono |
-| heurísticas | thread pool |
-| parsing | local |
-
-A arquitetura favorece:
-
-- baixa latência
-- alta reutilização
-- isolamento de heurísticas
-
----
-
-# Estrutura do projeto
-
-```bash
-app/
- ├─ api/
- └─ cli/
-
-core/
- ├─ core/
- ├─ app/
- ├─ assets/
- ├─ datasets/
- ├─ docs/
- └─ providers/
+URL (string)
+  └─▶ validate_url  →  ScanContext (estrutura da URL)
+        └─▶ collect  →  ScanContext (+ dados externos injetados)
+              └─▶ execute  →  list[ResultBase] (uma por heurística)
+                    └─▶ context_apply  →  list[ResultBase] (scores ajustados)
+                          └─▶ score  →  float (0–100)
+                                └─▶ response_builder  →  (ScanResult, TargetData)
 ```

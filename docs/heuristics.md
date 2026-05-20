@@ -647,7 +647,6 @@ typosquatting     → domain_age, ssl_score, dns_score, random_domain_risk, pass
 3. Regras com `normalized = None` são excluídas
 4. Score bruto = média ponderada dos `normalized` restantes pelos `weight`
 5. Score final = `sigmoid(score_bruto, k=5)` → mapeado para `[0, 100]`
-6. Se `model.pkl` disponível, ML sobrescreve o sigmoid como score primário
 
 ---
 

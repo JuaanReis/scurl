@@ -80,6 +80,7 @@ curl -X POST http://localhost:8000/analyze \
 | [`docs/heuristics.md`](./docs/heuristics.md) | heurísticas e categorias |
 | [`docs/scoring.md`](./docs/scoring.md) | sistema de scoring |
 | [`docs/calibration.md`](./docs/calibration.md) | calibração e limitações |
+| [`docs/installation.md`](./docs/INSTALLATION.md) | Instalação e uso |
 | [`docs/CLI.md`](./docs/CLI.md) | flags e uso da CLI |
 | [`docs/API.md`](./docs/API.md) | endpoints REST |
 
