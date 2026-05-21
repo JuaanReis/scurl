@@ -48,28 +48,16 @@ def save_scan(scan: dict, target: dict) -> None:
         )
         conn.commit()
 
-def find_by_hash(url_hash: str, ttl_seconds: int = 3600) -> tuple[dict, dict] | None:
+def find_by_hash(url_hash: str) -> tuple[dict, dict] | None:
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT payload, timestamp FROM scans WHERE url_hash = ?", (url_hash,)
+            "SELECT payload FROM scans WHERE url_hash = ?", (url_hash,)
         ).fetchone()
 
     if not row:
         return None
 
     data = json.loads(row["payload"])
-    scan = data.get("scan", data)
-    score = scan.get("result", {}).get("score", 0)
-
-    if score >= 40:
-        ttl_seconds = 900
-    
-    ts = datetime.fromisoformat(row["timestamp"])
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-
-    if datetime.now(timezone.utc) - ts > timedelta(seconds=ttl_seconds):
-        return None
 
     if "scan" in data:
         return data["scan"], data["target"]

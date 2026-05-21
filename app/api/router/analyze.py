@@ -3,16 +3,17 @@ from functools import partial
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
+from time import perf_counter
 from slowapi.util import get_remote_address
+from ..schema.map_error import ErrorResponse
+from core.engine.engine import run_engine
+from scurl import config
 from ..schema.map_result import (
     AnalyzeRequest,
     AnalyzeResponse,
     ScanResponse,
     TargetResponse
 )
-from ..schema.map_error import ErrorResponse
-from core.engine.engine import run_engine
-from scurl import config
 
 _rate_enabled = config["rate_limit"]["enabled"]
 _rpm = config["rate_limit"]["requests_per_minute"]
@@ -35,6 +36,8 @@ _semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCANS)
 )
 @limiter.limit(_limit_string)
 async def analyze_url(request: Request, body: AnalyzeRequest):
+    start = perf_counter()
+
     if _semaphore.locked():
         return JSONResponse(
                     status_code=503, 
@@ -55,6 +58,9 @@ async def analyze_url(request: Request, body: AnalyzeRequest):
                     retries=config["scanner"]["retries"]
                 )
         )
+
+    if "meta" in scan:
+        scan["meta"]["scan_time_s"] = round(perf_counter() - start, 3) 
 
     if scan.get("status") == "error":
         return JSONResponse(status_code=400, content=scan)

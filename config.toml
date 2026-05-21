@@ -15,7 +15,6 @@ http2 = false
 
 [cache]
 enabled = true
-ttl = 3600
 
 [rate_limit]
 enabled = true

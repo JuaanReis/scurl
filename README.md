@@ -29,7 +29,8 @@ Requer **Python 3.11+**.
 ```bash
 git clone https://github.com/JuaanReis/scurl.git
 cd scurl
-pip install -e .
+pip install uv
+uv sync
 ```
 
 Após a instalação, `scurl` e `scurl-api` estarão disponíveis no ambiente.
@@ -58,7 +59,7 @@ O ponto de entrada principal é `-u`, que recebe a URL alvo. As flags disponíve
 
 ## *API*
 
-Inicie o servidor com `scurl-api`. Por padrão sobe em `http://localhost:8000`, com documentação interativa disponível em `http://localhost:8000/docs` (Swagger UI).
+Inicie o servidor com `scurl-api`. Por padrão sobe em `http://localhost:8000`.
 
 ```bash
 scurl-api

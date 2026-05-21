@@ -12,8 +12,8 @@ def parse_args() -> Namespace | None:
     parse.add_argument("--timeout", "-T", type=float, default=5)
     parse.add_argument("-k", type=int, default=5)
     parse.add_argument("--retries", "-r", type=int, default=3)
-    parse.add_argument("--cache", "-c", action="store_true")
     parse.add_argument("--disable-color", "-dc", action="store_true")
+    parse.add_argument("--cache", "-c", action="store_true", default=False)
 
     args = parse.parse_args()
 

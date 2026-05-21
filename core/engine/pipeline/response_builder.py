@@ -1,4 +1,5 @@
 from time import time
+from ...math.shannon_entropy import shannon_entropy
 from core.models.scan_context import ScanContext
 from core.engine.analysis.insights import insights
 from importlib.metadata import version
@@ -8,15 +9,6 @@ from collections import Counter
 from datetime import datetime, timezone
 
 __version__ = version("scurl")
-
-
-def _domain_entropy(domain: str) -> float:
-    if not domain:
-        return 0.0
-    counts = Counter(domain)
-    length = len(domain)
-    return round(-sum((c / length) * math.log2(c / length) for c in counts.values()), 4)
-
 
 def _build_identity(ctx: ScanContext) -> dict:
     structure = ctx.target.structure
@@ -54,12 +46,11 @@ def _build_identity(ctx: ScanContext) -> dict:
         "is_homograph": False,  
         "is_https": structure.get("scheme", "").lower() == "https",
         "domain_length": structure.get("domain_length", 0),
-        "domain_entropy": _domain_entropy(registered_domain),
+        "domain_entropy": shannon_entropy(registered_domain),
         "url_length": structure.get("url_length", 0),
         "has_ip": bool(structure.get("has_ip")),
         "has_port": bool(structure.get("has_port")),
     }
-
 
 def _build_network(ctx: ScanContext) -> dict:
     dns = ctx.target.dns or {}

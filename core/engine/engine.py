@@ -25,7 +25,7 @@ def run_engine(url: str, k: int = 5, timeout: float = 5, processors: int = 2, re
 
     rules = get_rules()
 
-    if error := execute_rules(ctx, rules, processors):  
+    if error := execute_rules(ctx, rules, processors):
         return build_error_response(ctx, **error["error"]), {}
 
     meta_attribute(ctx, processors)
