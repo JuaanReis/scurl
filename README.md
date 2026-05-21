@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/scurl_logo_no_background.png" width="100%" alt="SCURL Logo">
+  <img src="assets/scurl_logo_min_no_background.png" width="100%" alt="SCURL Logo">
 </p>
 
 ---

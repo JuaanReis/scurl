@@ -18,7 +18,8 @@ dependencies = [
     "tldextract==5.3.1",
     "uvicorn==0.47.0",
     "colorama>=0.4.6",
-    "tomli>=2.0.1; python_version < '3.11'"
+    "tomli>=2.0.1; python_version < '3.11'",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.scripts]

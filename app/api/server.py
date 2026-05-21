@@ -15,7 +15,6 @@ import uvicorn
 from scurl import config
 __version__ = version("scurl")
 load_dotenv()
-print(f"[DEBUG] SCURL_ENV={getenv('SCURL_ENV')}")
 _docs_url = "/docs" if getenv("SCURL_ENV") != "production" else None
 app = FastAPI(title="scurl", version=__version__, docs_url=_docs_url, redoc_url=None)
 
