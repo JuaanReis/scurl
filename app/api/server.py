@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -20,6 +21,7 @@ load_dotenv()
 _docs_url = "/docs" if getenv("SCURL_ENV") != "production" else None
 _STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="scurl", version=__version__, docs_url=_docs_url, redoc_url=None)
+app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
 if config["server"]["cors"]:
     app.add_middleware(
