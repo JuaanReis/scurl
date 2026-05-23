@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from pathlib import Path
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -15,7 +16,9 @@ import uvicorn
 from scurl import config
 __version__ = version("scurl")
 load_dotenv()
+
 _docs_url = "/docs" if getenv("SCURL_ENV") != "production" else None
+_STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="scurl", version=__version__, docs_url=_docs_url, redoc_url=None)
 
 if config["server"]["cors"]:
@@ -28,6 +31,15 @@ if config["server"]["cors"]:
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def index():
+    return (_STATIC / "index.html").read_text(encoding="utf-8")
+ 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon_ico():
+    return FileResponse(_STATIC / "favicon.png", media_type="image/x-icon")
+
 app.include_router(router)
 app.include_router(scans_router)
 

@@ -1,27 +1,48 @@
+import copy
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
 from core.models.scan_context import ScanContext
 from core.models.scan_result import ScanResult
+
 logger = logging.getLogger(__name__)
 
 MAX_SCAN_SECONDS = 15
+MAX_WORKERS = 8
+MIN_WORKERS = 1
 
 def execute_rules(ctx: ScanContext, rules: list, processors: int) -> dict | None:
-    frozen = dict(ctx.target.structure)
+    workers = max(MIN_WORKERS, min(processors, MAX_WORKERS))
+    frozen = copy.deepcopy(dict(ctx.target.structure))
     frozen["html_parser"] = ctx.target.html
     frozen["headers"] = dict(ctx.target.response.headers) if ctx.target.response else {}
-    frozen["dns"] = ctx.target.dns
-    frozen["ssl"] = ctx.target.ssl
-    frozen["rdap"] = ctx.target.rdap
-    frozen["safe_browsing"] = ctx.target.safe_browsing
+    frozen["dns"] = copy.deepcopy(ctx.target.dns)
+    frozen["ssl"] = copy.deepcopy(ctx.target.ssl)
+    frozen["rdap"] = copy.deepcopy(ctx.target.rdap)
+    frozen["safe_browsing"] = copy.deepcopy(ctx.target.safe_browsing)
 
-    with ThreadPoolExecutor(max_workers=min(processors, 8)) as executor:
+    with ThreadPoolExecutor(max_workers=workers) as executor:
         future_map = {executor.submit(rule.fn, frozen): rule for rule in rules}
+        timed_out = False
+        futures_iter = as_completed(future_map, timeout=MAX_SCAN_SECONDS)
 
         try:
-            for future in as_completed(future_map, timeout=MAX_SCAN_SECONDS):
+            while True:
+                try:
+                    future = next(futures_iter)
+                except StopIteration:
+                    break
+                except FuturesTimeout:
+                    timed_out = True
+                    logger.error("Scan timeout para %s — aproveitando resultados parciais", ctx.url)
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    break
+
                 rule = future_map[future]
-                data = future.result()
+                try:
+                    data = future.result()
+                except Exception as e:
+                    logger.error("Rule %s falhou com exceção: %s", rule.name, e, exc_info=True)
+                    continue
 
                 if data is None:
                     logger.warning("Rule %s retornou None, ignorando", rule.name)
@@ -36,16 +57,24 @@ def execute_rules(ctx: ScanContext, rules: list, processors: int) -> dict | None
                     details=data.details,
                 ))
 
-        except FuturesTimeout:
-            executor.shutdown(wait=False, cancel_futures=True)
-            logger.error("Scan timeout para %s", ctx.url)
+        except Exception as e:
+            logger.critical("Erro inesperado no loop de execução das rules: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": {
-                    "type": "scan_timeout",
-                    "message": "Scan excedeu o tempo limite"
+                    "type": "execution_error",
+                    "message": str(e),
                 }
             }
+
+    if timed_out and not ctx.results:
+        return {
+            "status": "error",
+            "error": {
+                "type": "scan_timeout",
+                "message": "Scan excedeu o tempo limite e nenhuma rule completou",
+            }
+        }
 
     ctx.results_map = {r.name: r.value for r in ctx.results}
     return None

@@ -4,19 +4,18 @@ import socket
 from urllib.parse import urlparse
 from scurl import config
 from importlib.metadata import version
-
 __version__ = version("scurl")
 
-BLOCKED_RANGES = [
-    ipaddress.ip_network("169.254.0.0/16"),
-    ipaddress.ip_network("0.0.0.0/8"),
+BLOCKED_RANGES: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = [
+    ipaddress.ip_network("0.0.0.0/8"),          # "this" network
+    ipaddress.ip_network("100.64.0.0/10"),       # Carrier-Grade NAT
+    ipaddress.ip_network("169.254.0.0/16"),      # link-local (redundante, mas explícito)
+    ipaddress.ip_network("192.0.2.0/24"),        # TEST-NET-1
+    ipaddress.ip_network("198.51.100.0/24"),     # TEST-NET-2
+    ipaddress.ip_network("203.0.113.0/24"),      # TEST-NET-3
+    ipaddress.ip_network("240.0.0.0/4"),         # reserved (broadcast futuro)
+    ipaddress.ip_network("::ffff:0:0/96"),       # IPv4-mapped IPv6 block
 ]
-
-
-def _is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
-    if ip.is_private or ip.is_loopback or ip.is_link_local:
-        return True
-    return any(ip in r for r in BLOCKED_RANGES)
 
 def _error_response(url: str | None, error_type: str, message: str) -> dict:
     return {
@@ -25,64 +24,109 @@ def _error_response(url: str | None, error_type: str, message: str) -> dict:
         "error": {"type": error_type, "message": message},
     }
 
-def _is_private_or_local(url: str) -> str | None:
+def _is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """
+    Retorna True se o IP for considerado bloqueado.
+
+    Cobre:
+    - Loopback, link-local e privado (via flags nativas do Python)
+    - IPv4-mapped IPv6 (ex: ::ffff:127.0.0.1) — desempacota e reavalia
+    - Ranges adicionais não cobertos pelo Python < 3.11
+    """
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        return _is_blocked_ip(ip.ipv4_mapped)
+
+    if ip.is_private or ip.is_loopback or ip.is_link_local:
+        return True
+
+    return any(ip in r for r in BLOCKED_RANGES)
+
+def resolve_and_validate_host(host: str) -> tuple[str | None, ipaddress.IPv4Address | ipaddress.IPv6Address | None]:
+    """
+    Resolve o hostname para IP e valida se é seguro.
+
+    Retorna:
+        (None, ip)         → host resolvido e seguro
+        ("localhost", None) → bloqueado como localhost
+        ("private_ip", None) → bloqueado como IP privado
+        ("error", None)    → falha na resolução DNS
+    """
+    localhost_strings = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+    if host in localhost_strings or host.endswith(".local"):
+        if not config["security"]["allow_localhost"]:
+            return "localhost", None
+
     try:
-        host = urlparse(url).hostname
-        if not host:
-            return "error"
+        ip = ipaddress.ip_address(host)
+        if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
+            return "private_ip", None
+        return None, ip
+    except ValueError:
+        pass
 
-        if host in ("localhost", "127.0.0.1", "::1") or host.endswith(".local"):
-            if not config["security"]["allow_localhost"]:
-                return "localhost"
-
-        try:
-            ip = ipaddress.ip_address(host)
-            if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
-                return "private_ip"
-        except ValueError:
-            try:
-                resolved = socket.gethostbyname(host)
-                ip = ipaddress.ip_address(resolved)
-                if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
-                    return "private_ip"
-            except socket.gaierror:
-                return "error"
-
+    try:
+        resolved = socket.gethostbyname(host)
+        ip = ipaddress.ip_address(resolved)
+        if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
+            return "private_ip", None
+        return None, ip
+    except socket.gaierror:
+        return "error", None
     except Exception:
-        return "error"
+        return "error", None
 
-    return None
+def _url_validator(url: str) -> tuple[dict | None, ipaddress.IPv4Address | ipaddress.IPv6Address | None]:
+    """
+    Valida a URL e retorna (erro, ip_resolvido).
 
-def _url_validator(url: str) -> dict | None:
+    O IP resolvido é retornado quando válido para que o collect step
+    possa fixá-lo na requisição, prevenindo DNS rebinding.
+    """
     if not url:
-        return _error_response(None, "missing_url", "URL não informada")
+        return _error_response(None, "missing_url", "URL não informada"), None
 
     if len(url) > 2048:
-        return _error_response(url, "url_too_long", "URL muito longa")
+        return _error_response(url, "url_too_long", "URL muito longa"), None
 
-    if not url.lower().startswith(("http://", "https://")):
-        return _error_response(url, "missing_protocol", "URL inválida")
+    parsed = urlparse(url)
 
-    block = _is_private_or_local(url)
+    if parsed.scheme not in ("http", "https"):
+        return _error_response(url, "missing_protocol", "URL inválida"), None
 
-    if block == "localhost":
-        return _error_response(url, "localhost_blocked", "Acesso a localhost não permitido")
+    host = parsed.hostname
+    if not host:
+        return _error_response(url, "invalid_host", "Host ausente na URL"), None
 
-    if block == "private_ip":
-        return _error_response(url, "private_ip_blocked", "Acesso a IPs privados não permitido")
+    block_reason, resolved_ip = resolve_and_validate_host(host)
 
-    if block == "error":
-        return _error_response(url, "dns_resolution_error", "Não foi possível resolver o host")
+    if block_reason == "localhost":
+        return _error_response(url, "localhost_blocked", "Acesso a localhost não permitido"), None
 
-    return None
+    if block_reason == "private_ip":
+        return _error_response(url, "private_ip_blocked", "Acesso a IPs privados não permitido"), None
+
+    if block_reason == "error":
+        return _error_response(url, "dns_resolution_error", "Não foi possível resolver o host"), None
+
+    return None, resolved_ip
 
 def validate_target(ctx: ScanContext) -> dict | None:
     """
-    Valida a URL de entrada. Retorna um dicionário de erro se a URL for inválida ou None se for válida.
-        - Se a URL estiver vazia, retorna um erro do tipo "missing_url".
-        - Se a URL não começar com "http://" ou "https://", retorna um erro do tipo "missing_protocol".
-        - Se a URL for muito longa, retorna um erro do tipo "url_too_long".
-        - Se o host resolver para IP privado ou local, retorna erro de bloqueio.
-        - Se o DNS falhar ou ocorrer erro inesperado, retorna erro de resolução.
+    Valida a URL de entrada e armazena o IP resolvido no contexto.
+
+    O IP é salvo em ctx.meta para uso posterior no collect step,
+    prevenindo DNS rebinding entre a validação e a requisição HTTP.
+
+    Retorna:
+        None           → URL válida, pipeline pode continuar
+        dict           → erro, pipeline deve abortar
     """
-    return _url_validator(ctx.target.url)
+
+    error, resolved_ip = _url_validator(ctx.target.url)
+
+    if error:
+        return error
+
+    ctx.meta.resolved_ip = resolved_ip
+
+    return None

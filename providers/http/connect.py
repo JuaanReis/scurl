@@ -22,6 +22,7 @@ def extract_redirect_chain(response) -> list:
     })
     return chain
 
+
 def _build_result(response) -> HTTPResult:
     headers = dict(response.headers)
     headers.pop("set-cookie", None)
@@ -38,10 +39,15 @@ def _build_result(response) -> HTTPResult:
         redirect_chain=extract_redirect_chain(response)
     )
 
-def get_response(url: str, retries: int = 3, delay: float = 0.6, timeout: float = 5) -> HTTPResult | None:
+
+def get_response(url: str, retries: int = 3, delay: float = 0.6, timeout: float = 5, allow_redirects: bool = False) -> HTTPResult | None:
     for attempt in range(retries):
         try:
-            response = scan_client.get(url, timeout=timeout)
+            response = scan_client.get(
+                url,
+                timeout=timeout,
+                follow_redirects=allow_redirects,
+            )
             return _build_result(response)
 
         except HTTPStatusError as e:
@@ -59,25 +65,20 @@ def get_response(url: str, retries: int = 3, delay: float = 0.6, timeout: float 
     return None
 
 def post_response(url: str, data: dict | None = None, retries: int = 3, delay: float = 0.6, timeout: float = 5) -> HTTPResult | None:
-
     for attempt in range(retries):
-
         try:
             response = scan_client.post(
                 url,
                 json=data,
-                timeout=timeout
+                timeout=timeout,
             )
-
             return _build_result(response)
 
         except HTTPStatusError as e:
             response = e.response
-
             if should_retry(response.status_code):
                 sleep(get_retry_after(dict(response.headers)))
                 continue
-
             return _build_result(response)
 
         except (ConnectError, RequestError) as e:
@@ -88,7 +89,6 @@ def post_response(url: str, data: dict | None = None, retries: int = 3, delay: f
                 url,
                 e
             )
-
             if attempt < retries - 1:
                 backoff_delay(attempt, base_delay=delay)
 
