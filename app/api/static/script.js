@@ -231,6 +231,7 @@ document.getElementById("version").textContent = "1.0.9";
       document.title = messages[
         Math.floor(Math.random() * messages.length)
       ];
+    }
 
     const overlay = document.createElement("div");
     overlay.style.cssText = `
@@ -277,5 +278,4 @@ document.getElementById("version").textContent = "1.0.9";
         document.getElementById("popup-close").addEventListener("click", () => overlay.remove());
         document.getElementById("popup-ok").addEventListener("click", () => overlay.remove());
     }, 400 + Math.random() * 900);
-    }
   }
