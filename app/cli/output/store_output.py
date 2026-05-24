@@ -5,8 +5,9 @@ from pathlib import Path
 def save_output(file: str, data: dict, target: str | None = None):
     
     if target is not None:
-        data = {"url": target, **data}
-
+        data = {
+                "url": target, **data
+            }
 
     if file == "-":
         json.dump(data, sys.stdout, indent=2, ensure_ascii=False)

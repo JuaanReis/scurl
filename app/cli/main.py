@@ -4,13 +4,10 @@ try:
     from app.cli.output import print_output
     from app.cli.output.store_output import save_output
     from .args import parse_args
-    from importlib.metadata import version
     from providers.database.connection import init_db
 except KeyboardInterrupt:
     print("FALHA keyboard_interrupt: Execução interrompida pelo usuário")
     exit(0)
-
-__version__ = version("scurl")
 
 def main():
     try:
@@ -29,8 +26,6 @@ def main():
             save_output("-", scan, target)
             return
 
-        print(f"SCURL :: heuristic web analyzer v{__version__}")
-        print("─" * 40)
         scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=cache)
 
         print_output(scan, target, args.verbose, start)
