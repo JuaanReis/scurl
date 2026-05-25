@@ -23,7 +23,7 @@ _STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="scurl", version=__version__, docs_url=_docs_url, redoc_url=None)
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
-if config["server"]["cors"]:
+if config.get("server", {}).get("cors", True):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -73,11 +73,12 @@ async def health():
     }
 
 def run():
+    server_config = config.get("server", {})
     uvicorn.run(
         "app.api.server:app",
-        host=config["server"]["host"],
-        port=config["server"]["port"],
-        workers=config["server"]["workers"],
+        host=server_config.get("host", "0.0.0.0"),
+        port=server_config.get("port", 8000),
+        workers=server_config.get("workers", 1),
         reload=False
     )
 

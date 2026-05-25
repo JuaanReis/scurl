@@ -53,12 +53,12 @@ def resolve_and_validate_host(host: str) -> tuple[str | None, ipaddress.IPv4Addr
     """
     localhost_strings = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
     if host in localhost_strings or host.endswith(".local"):
-        if not config["security"]["allow_localhost"]:
+        if not config.get("security", {}).get("allow_localhost", False):
             return "localhost", None
 
     try:
         ip = ipaddress.ip_address(host)
-        if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
+        if _is_blocked_ip(ip) and not config.get("security", {}).get("allow_private_ips", False):
             return "private_ip", None
         return None, ip
     except ValueError:
@@ -67,7 +67,7 @@ def resolve_and_validate_host(host: str) -> tuple[str | None, ipaddress.IPv4Addr
     try:
         resolved = socket.gethostbyname(host)
         ip = ipaddress.ip_address(resolved)
-        if _is_blocked_ip(ip) and not config["security"]["allow_private_ips"]:
+        if _is_blocked_ip(ip) and not config.get("security", {}).get("allow_private_ips", False):
             return "private_ip", None
         return None, ip
     except socket.gaierror:

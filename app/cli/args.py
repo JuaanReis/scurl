@@ -20,7 +20,7 @@ def parse_args() -> Namespace | None:
     if args.url and args.target:
         parse.error("Use either positional URL or -u/--url, not both")
 
-    if args.disable_color or not config["output"]["colors"]:
+    if args.disable_color or not config.get("output", {}).get("colors", True):
         set_color(False)
 
     args.url = args.url or args.target

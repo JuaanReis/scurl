@@ -15,8 +15,8 @@ from ..schema.map_result import (
     TargetResponse
 )
 
-_rate_enabled = config["rate_limit"]["enabled"]
-_rpm = config["rate_limit"]["requests_per_minute"]
+_rate_enabled = config.get("rate_limit", {}).get("enabled", False)
+_rpm = config.get("rate_limit", {}).get("requests_per_minute", 10)
 _limit_string = f"{_rpm}/minute" if _rate_enabled else "99999/minute"
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
@@ -46,16 +46,17 @@ async def analyze_url(request: Request, body: AnalyzeRequest):
                     }
                 )
 
+    scanner_config = config.get("scanner", {})
     async with _semaphore:
         loop = asyncio.get_running_loop()
         scan, target = await loop.run_in_executor(
             None, partial(
                 run_engine, str(body.url), 
                     use_cache=body.use_cache, 
-                    timeout=config["scanner"]["timeout"], 
-                    processors=config["scanner"]["threads"], 
-                    k=config["scanner"]["k"], 
-                    retries=config["scanner"]["retries"]
+                    timeout=scanner_config.get("timeout", 5.0), 
+                    processors=scanner_config.get("threads", 2), 
+                    k=scanner_config.get("k", 5), 
+                    retries=scanner_config.get("retries", 3)
                 )
         )
 

@@ -13,7 +13,7 @@ from core.engine.pipeline import (
 def run_engine(url: str, k: int = 5, timeout: float = 5, processors: int = 2, retries: int = 3, use_cache: bool = False) -> tuple[dict, dict]:
     ctx = ScanContext(target=TargetData(url=url))
 
-    if use_cache and config["cache"]["enabled"]:
+    if use_cache and config.get("cache", {}).get("enabled", False):
         if cached := load_cache(ctx.meta.url_hash):
             return cached
 
