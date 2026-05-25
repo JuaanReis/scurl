@@ -13,13 +13,12 @@ def main():
     try:
         args = parse_args()
         cache = args.cache
+        url = args.url
         start = None
         if cache:
             from time import time
             start = time()
             init_db()
-            
-        url = args.url
 
         if args.output == "-":
             scan, target = run_engine(url, args.k, args.timeout, args.threads, args.retries, use_cache=cache)

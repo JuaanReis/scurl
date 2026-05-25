@@ -1,6 +1,3 @@
-from .infer import infer, _get_heuristic_details
-
-# ── ANSI colors ───────────────────────────────────────────────────────────────
 _R   = "\033[31m"
 _Y   = "\033[33m"
 _G   = "\033[32m"
@@ -79,15 +76,28 @@ def _kv_block(rows: list[tuple[str, str]]) -> None:
             continue
         print(f"  {_col(key, _DIM):<{key_w + ansi_pad}}  {val}")
 
-
-# ── sections ──────────────────────────────────────────────────────────────────
 def _print_verdict(result: dict) -> None:
     score   = result.get("score", 0.0)
-    verdict = result.get("verdict", "unknown").upper()
-    risk    = result.get("risk_level", "unknown").upper()
-    vc      = _verdict_color(result.get("verdict", ""))
+    verdict = result.get("verdict", "unknown")
+    risk    = result.get("risk_level", "unknown")
+    vc      = _verdict_color(verdict)
+
+    rows = [
+        ("verdict",     _col(verdict.upper(), vc)),
+        ("score",       f"{_fmt_score(score)} / 100"),
+        ("risk_level",  risk.upper()),
+    ]
+
+    confidence = result.get("confidence")
+    if confidence is not None:
+        rows.append(("confidence", f"{confidence:.2f}"))
+
+    ml_score = result.get("ml_score")
+    if ml_score is not None:
+        rows.append(("ml_score", f"{ml_score:.4f}"))
+
     print()
-    print(f"  {_col(verdict, vc)}  {_fmt_score(score)} / 100   [{risk}]")
+    _kv_block(rows)
     print()
 
 def _print_heuristics(heuristics: list, verbose: bool) -> None:
@@ -124,14 +134,12 @@ def _print_heuristic_details(details: dict, rule_w: int) -> None:
         if dv is None:
             continue
         if isinstance(dv, dict):
-            # nested dict — flatten one level
             for sk, sv in dv.items():
                 if sv is None:
                     continue
                 label = f"{dk}.{sk}"
                 print(f"{indent}{_col(label, _DIM):<{key_w + ansi_pad}}  {sv}")
         elif isinstance(dv, list):
-            # list — show first 3 items, truncate rest
             if not dv:
                 continue
             displayed = [_trunc(str(x), 60) for x in dv[:3]]
@@ -173,8 +181,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
                        dns: dict, http: dict, domain: dict,
                        content: dict, verbose: bool) -> None:
     rows: list[tuple[str, str]] = []
-
-    # ── identity ──────────────────────────────────────────────────────────────
     rows.append(("host",           identity.get("hostname", "n/a")))
     rows.append(("registered",     identity.get("registered_domain", "n/a")))
     rows.append(("tld",            identity.get("tld", "n/a")))
@@ -197,8 +203,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
         if query:
             rows.append(("query", query))
     rows.append(("", ""))
-
-    # ── http / network ────────────────────────────────────────────────────────
     status = http.get("status_code")
     rows.append(("status",         f"{status} OK" if status == 200 else str(status)))
     rows.append(("response_time",  f"{http.get('response_time_s', 'n/a')}s"))
@@ -245,8 +249,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
             rows.append((key, value))
 
     rows.append(("", ""))
-
-    # ── tls ───────────────────────────────────────────────────────────────────
     rows.append(("tls",              tls.get("version", "n/a")))
     rows.append(("cipher",           tls.get("cipher_suite", "n/a")))
     rows.append(("issuer",           tls.get("issuer", "n/a")))
@@ -275,8 +277,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
         if tls.get("serial_number"):
             rows.append(("serial",      tls["serial_number"]))
     rows.append(("", ""))
-
-    # ── dns ───────────────────────────────────────────────────────────────────
     a_records = dns.get("a") or []
     rows.append(("a",     _lst(a_records)))
     aaaa = dns.get("aaaa") or []
@@ -294,8 +294,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
     rows.append(("dkim",  _yn(dns.get("dkim"))))
     rows.append(("ttl",   str(dns.get("ttl", "n/a"))))
     rows.append(("", ""))
-
-    # ── content ───────────────────────────────────────────────────────────────
     title = content.get("title")
     rows.append(("title",       title if title else "n/a"))
     rows.append(("language",    content.get("language") or "n/a"))
@@ -322,7 +320,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
             rows.append(("html_sha256", html_hash))
     rows.append(("", ""))
 
-    # ── domain registration ───────────────────────────────────────────────────
     rows.append(("registrar",     domain.get("registrar", "n/a")))
     rows.append(("created",       domain.get("created_at", "n/a")))
     rows.append(("updated",       domain.get("updated_at", "n/a")))
@@ -332,7 +329,6 @@ def _print_target_flat(identity: dict, network: dict, tls: dict,
     rows.append(("domain_status", _lst(status_list)))
 
     _kv_block(rows)
-
 
 def _print_engine(meta: dict, stats: dict) -> None:
     scan_id   = meta.get("scan_id", "n/a")[:16]
@@ -361,9 +357,6 @@ def _print_engine(meta: dict, stats: dict) -> None:
     print()
     _kv_block(rows)
     print()
-
-
-# ── main entry ────────────────────────────────────────────────────────────────
 
 def print_output(scan: dict, target: dict, verbose: bool = False, time=None):
     status = scan.get("status")
